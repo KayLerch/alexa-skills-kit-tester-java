@@ -1,0 +1,122 @@
+package io.klerch.alexa.tester.client;
+
+import com.amazonaws.services.lambda.runtime.*;
+import io.klerch.alexa.tester.request.AlexaRequest;
+import io.klerch.alexa.tester.response.AlexaResponse;
+import org.apache.commons.lang3.Validate;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+public class AlexaUnitTest extends AlexaTest {
+    private final RequestStreamHandler requestStreamHandler;
+    private final Context context;
+
+    AlexaUnitTest(final AlexaUnitTestBuilder builder) {
+        super(builder);
+        this.requestStreamHandler = builder.requestStreamHandler;
+        this.context = builder.context;
+    }
+
+    public static AlexaUnitTestBuilder create(final String applicationId, final RequestStreamHandler requestStreamHandler) {
+        return new AlexaUnitTestBuilder(applicationId, requestStreamHandler);
+    }
+
+    public RequestStreamHandler getRequestStreamHandler() {
+        return requestStreamHandler;
+    }
+
+    public Context getContext() { return context; }
+
+    @Override
+    public AlexaResponse fire(final AlexaRequest request, final String payload) {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final InputStream inputStream = new ByteArrayInputStream(payload.getBytes());
+        try {
+            requestStreamHandler.handleRequest(inputStream, outputStream, context);
+        } catch (final IOException e) {
+            throw new RuntimeException("Error on invoking request stream handler.", e);
+        }
+
+        return request.expectsResponse() ?
+                new AlexaResponse(request, outputStream.toByteArray()) : AlexaResponse.VOID;
+    }
+
+    public static class AlexaUnitTestBuilder extends AlexaTestBuilder<AlexaUnitTest, AlexaUnitTestBuilder> {
+        RequestStreamHandler requestStreamHandler;
+        Context context;
+
+        AlexaUnitTestBuilder(final String applicationId, final RequestStreamHandler requestStreamHandler) {
+            super(applicationId);
+            this.requestStreamHandler = requestStreamHandler;
+        }
+
+        public AlexaUnitTestBuilder withContext(final Context context) {
+            this.context = context;
+            return this;
+        }
+
+        @Override
+        public AlexaUnitTest build() {
+            preBuild();
+            Validate.notNull(requestStreamHandler, "Request stream handler must not be null.");
+
+            if (context == null) {
+                context = getContext();
+            }
+
+            return new AlexaUnitTest(this);
+        }
+
+        private Context getContext() {
+            return new Context() {
+                @Override
+                public String getAwsRequestId() {
+                    return null;
+                }
+
+                @Override
+                public String getLogGroupName() {
+                    return null;
+                }
+
+                @Override
+                public String getLogStreamName() {
+                    return null;
+                }
+
+                @Override
+                public String getFunctionName() {
+                    return null;
+                }
+
+                @Override
+                public CognitoIdentity getIdentity() {
+                    return null;
+                }
+
+                @Override
+                public ClientContext getClientContext() {
+                    return null;
+                }
+
+                @Override
+                public int getRemainingTimeInMillis() {
+                    return 0;
+                }
+
+                @Override
+                public int getMemoryLimitInMB() {
+                    return 0;
+                }
+
+                @Override
+                public LambdaLogger getLogger() {
+                    return null;
+                }
+            };
+        }
+    }
+}
