@@ -7,10 +7,7 @@ import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.ClearQueueDirective;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
-import com.amazon.speech.ui.Card;
-import com.amazon.speech.ui.LinkAccountCard;
-import com.amazon.speech.ui.SimpleCard;
-import com.amazon.speech.ui.StandardCard;
+import com.amazon.speech.ui.*;
 import org.apache.commons.lang3.BooleanUtils;
 
 public enum AlexaAssertion implements AlexaAssertionValidator {
@@ -32,28 +29,40 @@ public enum AlexaAssertion implements AlexaAssertionValidator {
             return response.getResponse().getCard() != null;
         }
     },
-    HasSimpleCard {
+    HasCardIsSimple {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return cardInstanceOf(response, SimpleCard.class);
         }
     },
-    HasStandardCard {
+    HasCardIsStandard {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return cardInstanceOf(response, StandardCard.class);
         }
     },
-    HasLinkAccountCard {
+    HasCardIsLinkAccount {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return cardInstanceOf(response, LinkAccountCard.class);
         }
     },
-    HasReprompt {
+    HasRepromptSpeech {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return response.getResponse().getReprompt() != null && response.getResponse().getReprompt().getOutputSpeech() != null;
+        }
+    },
+    HasRepromptSpeechIsSsml {
+        @Override
+        public boolean isTrue(final SpeechletResponseEnvelope response) {
+            return repromptOutputSpeechInstanceOf(response, SsmlOutputSpeech.class);
+        }
+    },
+    HasRepromptSpeechIsPlainText {
+        @Override
+        public boolean isTrue(final SpeechletResponseEnvelope response) {
+            return repromptOutputSpeechInstanceOf(response, PlainTextOutputSpeech.class);
         }
     },
     HasOutputSpeech {
@@ -62,53 +71,65 @@ public enum AlexaAssertion implements AlexaAssertionValidator {
             return response.getResponse().getOutputSpeech() != null;
         }
     },
+    HasOutputSpeechIsSsml {
+        @Override
+        public boolean isTrue(final SpeechletResponseEnvelope response) {
+            return outputSpeechInstanceOf(response, SsmlOutputSpeech.class);
+        }
+    },
+    HasOutputSpeechIsPlainText {
+        @Override
+        public boolean isTrue(final SpeechletResponseEnvelope response) {
+            return outputSpeechInstanceOf(response, PlainTextOutputSpeech.class);
+        }
+    },
     HasDirective {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return response.getResponse().getDirectives() != null && !response.getResponse().getDirectives().isEmpty();
         }
     },
-    HasPlayDirective {
+    HasDirectiveIsPlay {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return directiveInstanceOf(response, PlayDirective.class);         }
     },
-    HasPlayDirectiveToReplaceAll {
+    HasDirectiveIsPlayWithReplaceAll {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return AlexaAssertion.playBehaviorEquals(response, PlayBehavior.REPLACE_ALL);
         }
     },
-    HasPlayDirectiveToEnqueue {
+    HasDirectiveIsPlayWithEnqueue {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return AlexaAssertion.playBehaviorEquals(response, PlayBehavior.ENQUEUE);
         }
     },
-    HasPlayDirectiveToReplaceEnqueued {
+    HasDirectiveIsPlayWithReplaceEnqueued {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return playBehaviorEquals(response, PlayBehavior.REPLACE_ENQUEUED);
         }
     },
-    HasStopDirective {
+    HasDirectiveIsStop {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return directiveInstanceOf(response, StopDirective.class);        }
     },
-    HasClearQueueDirective {
+    HasDirectiveIsClearQueue {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return directiveInstanceOf(response, ClearQueueDirective.class);
         }
     },
-    HasClearQueueDirectiveToClearAll {
+    HasDirectiveIsClearQueueWithClearAll {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return clearBehaviorEquals(response, ClearBehavior.CLEAR_ALL);
         }
     },
-    HasClearQueueDirectiveToClearEnqueued {
+    HasDirectiveIsClearQueueWithClearEnqueued {
         @Override
         public boolean isTrue(final SpeechletResponseEnvelope response) {
             return clearBehaviorEquals(response, ClearBehavior.CLEAR_ENQUEUED);
@@ -116,14 +137,14 @@ public enum AlexaAssertion implements AlexaAssertionValidator {
     };
 
     private static boolean playBehaviorEquals(final SpeechletResponseEnvelope response, final PlayBehavior behavior) {
-        return HasPlayDirective.isTrue(response) && response.getResponse().getDirectives().stream()
+        return HasDirectiveIsPlay.isTrue(response) && response.getResponse().getDirectives().stream()
                 .filter(PlayDirective.class::isInstance)
                 .map(directive -> (PlayDirective)directive)
                 .anyMatch(directive -> behavior.equals(directive.getPlayBehavior()));
     }
 
     private static boolean clearBehaviorEquals(final SpeechletResponseEnvelope response, final ClearBehavior behavior) {
-        return HasPlayDirective.isTrue(response) && response.getResponse().getDirectives().stream()
+        return HasDirectiveIsClearQueue.isTrue(response) && response.getResponse().getDirectives().stream()
                 .filter(ClearQueueDirective.class::isInstance)
                 .map(directive -> (ClearQueueDirective)directive)
                 .anyMatch(directive -> behavior.equals(directive.getClearBehavior()));
@@ -135,5 +156,13 @@ public enum AlexaAssertion implements AlexaAssertionValidator {
 
     private static <TCard extends Card> boolean cardInstanceOf(final SpeechletResponseEnvelope response, final Class<TCard> cardClass) {
         return HasCard.isTrue(response) && cardClass.isInstance(response.getResponse().getCard());
+    }
+
+    private static <TOutputSpeech extends OutputSpeech> boolean outputSpeechInstanceOf(final SpeechletResponseEnvelope response, final Class<TOutputSpeech> outputSpeechClass) {
+        return HasOutputSpeech.isTrue(response) && outputSpeechClass.isInstance(response.getResponse().getOutputSpeech());
+    }
+
+    private static <TOutputSpeech extends OutputSpeech> boolean repromptOutputSpeechInstanceOf(final SpeechletResponseEnvelope response, final Class<TOutputSpeech> outputSpeechClass) {
+        return HasRepromptSpeech.isTrue(response) && outputSpeechClass.isInstance(response.getResponse().getReprompt().getOutputSpeech());
     }
 }

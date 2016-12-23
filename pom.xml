@@ -83,11 +83,5 @@
             <optional>true</optional>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.klerch</groupId>
-            <artifactId>alexa-skills-kit-tellask-java-calculator</artifactId>
-            <version>1.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>
