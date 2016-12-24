@@ -1,14 +1,11 @@
 package io.klerch.alexa.tester.client;
 
-import com.amazonaws.services.lambda.runtime.ClientContext;
-import com.amazonaws.services.lambda.runtime.CognitoIdentity;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
+import com.amazonaws.services.lambda.runtime.*;
+import io.klerch.alexa.tester.AssetFactory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import skill.CalculationSpeechletHandler;
 
 import java.util.Locale;
 
@@ -25,12 +22,12 @@ public class AlexaUnitTestTest {
         AlexaUnitTest.create("", null).build();
 
         exception.expect(IllegalArgumentException.class);
-        AlexaUnitTest.create(null, new CalculationSpeechletHandler()).build();
+        AlexaUnitTest.create(null, AssetFactory.getRequestStreamHandler()).build();
     }
 
     @Test
     public void createValidMinCustomized() throws Exception {
-        final CalculationSpeechletHandler handler = new CalculationSpeechletHandler();
+        final RequestStreamHandler handler = AssetFactory.getRequestStreamHandler();
         final AlexaUnitTest test1 = AlexaUnitTest.create("appId", handler).build();
         Assert.assertEquals(test1.getLocale(), Locale.US);
         Assert.assertEquals(test1.getRequestStreamHandler(), handler);
@@ -41,7 +38,7 @@ public class AlexaUnitTestTest {
 
     @Test
     public void createValidMaxCustomized() throws Exception {
-        final CalculationSpeechletHandler handler = new CalculationSpeechletHandler();
+        final RequestStreamHandler handler = AssetFactory.getRequestStreamHandler();
         final Context context = getContext();
         final AlexaUnitTest test1 = AlexaUnitTest.create("appId", handler)
                 .withLocale(Locale.GERMANY)

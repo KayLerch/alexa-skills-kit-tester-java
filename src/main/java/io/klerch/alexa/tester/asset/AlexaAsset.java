@@ -1,10 +1,17 @@
 package io.klerch.alexa.tester.asset;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
+import com.amazon.speech.speechlet.Directive;
+import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.ClearQueueDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.amazon.speech.ui.SsmlOutputSpeech;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.Optional;
 
 public enum AlexaAsset implements AlexaAssetValidator {
     Card {
@@ -347,6 +354,54 @@ public enum AlexaAsset implements AlexaAssetValidator {
         public boolean matches(SpeechletResponseEnvelope response, String pattern) {
             return exists(response) && AlexaAsset.matches(((PlainTextOutputSpeech)response.getResponse().getReprompt().getOutputSpeech()).getText(), pattern);
         }
+    },
+    DirectivePlay {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return AlexaAssertion.HasDirectiveIsPlay.isTrue(response);
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return AlexaAsset.directiveEquals(response, PlayDirective.class, value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return AlexaAsset.directiveMatches(response, PlayDirective.class, pattern);
+        }
+    },
+    DirectiveClearQueue {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return AlexaAssertion.HasDirectiveIsClearQueue.isTrue(response);
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return AlexaAsset.directiveEquals(response, ClearQueueDirective.class, value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return AlexaAsset.directiveMatches(response, ClearQueueDirective.class, pattern);
+        }
+    },
+    DirectiveStop {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return AlexaAssertion.HasDirectiveIsStop.isTrue(response);
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return AlexaAsset.directiveEquals(response, StopDirective.class, value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return AlexaAsset.directiveMatches(response, StopDirective.class, pattern);
+        }
     };
 
     private static boolean exists(final Object o) {
@@ -359,5 +414,41 @@ public enum AlexaAsset implements AlexaAssetValidator {
 
     private static boolean matches(final Object o, final String pattern) {
         return exists(o) && String.valueOf(o).matches(pattern);
+    }
+
+    private static <TDirective extends Directive> boolean directiveEquals(final SpeechletResponseEnvelope response, final Class<TDirective> directiveClass, final Object value) {
+        final Optional<TDirective> d = AlexaAsset.getDirectiveOfType(response, directiveClass);
+
+        if (d.isPresent()) {
+            try {
+                final ObjectMapper mapper = new ObjectMapper();
+                return AlexaAsset.equals(mapper.writeValueAsString(d.get()), value);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    private static <TDirective extends Directive> boolean directiveMatches(final SpeechletResponseEnvelope response, final Class<TDirective> directiveClass, final String pattern) {
+        final Optional<TDirective> d = AlexaAsset.getDirectiveOfType(response, directiveClass);
+
+        if (d.isPresent()) {
+            try {
+                final ObjectMapper mapper = new ObjectMapper();
+                return AlexaAsset.matches(mapper.writeValueAsString(d.get()), pattern);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <TDirective extends Directive> Optional<TDirective> getDirectiveOfType(SpeechletResponseEnvelope response, Class<TDirective> directiveClass) {
+        return response.getResponse().getDirectives().stream()
+                .filter(directiveClass::isInstance)
+                .map(directive -> (TDirective)directive)
+                .findFirst();
     }
 }

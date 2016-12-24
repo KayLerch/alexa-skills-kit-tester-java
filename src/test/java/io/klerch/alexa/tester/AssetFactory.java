@@ -3,6 +3,12 @@ package io.klerch.alexa.tester;
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.ui.*;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class AssetFactory {
     public static final String DEFAULT_VERSION = "1.0.0";
@@ -12,6 +18,12 @@ public class AssetFactory {
     public static final String DEFAULT_CARD_TEXT = "card_text";
     public static final String DEFAULT_CARD_SMALL_IMAGE = "https://img/small.jpg";
     public static final String DEFAULT_CARD_LARGE_IMAGE = "https://img/large.jpg";
+
+    public static RequestStreamHandler getRequestStreamHandler() {
+        return (inputStream, outputStream, context) -> {
+
+        };
+    }
 
     public static SpeechletResponseEnvelope getResponseWithSsmlOutputSpeech() {
         return getResponseWithSsmlOutputSpeech(DEFAULT_TEXT);
