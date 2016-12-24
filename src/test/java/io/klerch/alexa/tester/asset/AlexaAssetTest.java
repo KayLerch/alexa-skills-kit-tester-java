@@ -1,6 +1,8 @@
 package io.klerch.alexa.tester.asset;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
+import com.amazon.speech.speechlet.interfaces.audioplayer.ClearBehavior;
+import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
 import com.amazon.speech.ui.StandardCard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.klerch.alexa.tester.AssetFactory;
@@ -354,5 +356,53 @@ public class AlexaAssetTest {
         Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.equals(envelope, patternPositive));
         Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.equals(envelope, patternNegative));
         Assert.assertFalse(AlexaAsset.RepromptSpeechSsml.equals(envelope, patternPositive));
+    }
+
+    @Test
+    public void directivePlayExists() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ALL);
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectiveStop.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.exists(envelope));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItem.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStream.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamOffset.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamToken.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamUrl.exists(envelope));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ALL, false);
+        Assert.assertTrue(AlexaAsset.DirectivePlay.exists(envelope2));
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItem.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStream.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamToken.exists(envelope2));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamUrl.exists(envelope2));
+    }
+
+    @Test
+    public void directiveStopExists() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithStopDirective();
+
+        Assert.assertTrue(AlexaAsset.DirectiveStop.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.exists(envelope));
+    }
+
+    @Test
+    public void directiveClearQueueExists() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ALL);
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueue.exists(envelope));
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.exists(envelope));
+        Assert.assertFalse(AlexaAsset.DirectiveStop.exists(envelope));
     }
 }

@@ -2,10 +2,25 @@ package io.klerch.alexa.tester;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.amazon.speech.speechlet.SpeechletResponse;
+import com.amazon.speech.speechlet.interfaces.audioplayer.AudioItem;
+import com.amazon.speech.speechlet.interfaces.audioplayer.ClearBehavior;
+import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
+import com.amazon.speech.speechlet.interfaces.audioplayer.Stream;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.ClearQueueDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.*;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 public class AssetFactory {
+    public static final String DEFAULT_AP_PREVIOUS_TOKEN = "previous Token";
+    public static final String DEFAULT_AP_URL = "https://stream/stream.mp3";
+    public static final String DEFAULT_AP_TOKEN = "token";
+    public static final long DEFAULT_AP_OFFSET = 1000L;
+
     public static final String DEFAULT_VERSION = "1.0.0";
     public static final String DEFAULT_TEXT = "test";
     public static final String DEFAULT_CARD_TITLE = "card_title";
@@ -16,7 +31,6 @@ public class AssetFactory {
 
     public static RequestStreamHandler getRequestStreamHandler() {
         return (inputStream, outputStream, context) -> {
-
         };
     }
 
@@ -34,6 +48,45 @@ public class AssetFactory {
         final Reprompt reprompt = new Reprompt();
         reprompt.setOutputSpeech(outputSpeech);
         return envelope(tell ? SpeechletResponse.newTellResponse(outputSpeech) : SpeechletResponse.newAskResponse(outputSpeech, reprompt));
+    }
+
+    public static SpeechletResponseEnvelope getResponseWithPlayDirective(final PlayBehavior behavior) {
+        return getResponseWithPlayDirective(behavior, true);
+    }
+
+    public static SpeechletResponseEnvelope getResponseWithPlayDirective(final PlayBehavior behavior, final boolean withAudioItem) {
+        SpeechletResponseEnvelope response = getResponseWithSsmlOutputSpeech();
+
+        final PlayDirective playDirective = new PlayDirective();
+        playDirective.setPlayBehavior(behavior);
+
+        if (withAudioItem) {
+            final Stream stream = new Stream();
+            stream.setExpectedPreviousToken(DEFAULT_AP_PREVIOUS_TOKEN);
+            stream.setOffsetInMilliseconds(DEFAULT_AP_OFFSET);
+            stream.setToken(DEFAULT_AP_TOKEN);
+            stream.setUrl(DEFAULT_AP_URL);
+            final AudioItem audioItem = new AudioItem();
+            audioItem.setStream(stream);
+            playDirective.setAudioItem(audioItem);
+        }
+
+        response.getResponse().setDirectives(Collections.singletonList(playDirective));
+        return response;
+    }
+
+    public static SpeechletResponseEnvelope getResponseWithStopDirective() {
+        SpeechletResponseEnvelope response = getResponseWithSsmlOutputSpeech();
+        response.getResponse().setDirectives(Collections.singletonList(new StopDirective()));
+        return response;
+    }
+
+    public static SpeechletResponseEnvelope getResponseWithClearQueueDirective(final ClearBehavior behavior) {
+        SpeechletResponseEnvelope response = getResponseWithSsmlOutputSpeech();
+        ClearQueueDirective clearQueueDirective = new ClearQueueDirective();
+        clearQueueDirective.setClearBehavior(behavior);
+        response.getResponse().setDirectives(Collections.singletonList(clearQueueDirective));
+        return response;
     }
 
     public static SpeechletResponseEnvelope getResponseWithPlainOutputSpeech() {

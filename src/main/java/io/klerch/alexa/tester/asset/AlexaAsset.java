@@ -522,7 +522,7 @@ public enum AlexaAsset implements AlexaAssetValidator {
     DirectiveClearQueueBehavior {
         @Override
         public boolean exists(SpeechletResponseEnvelope response) {
-            return DirectivePlay.exists(response) &&
+            return DirectiveClearQueue.exists(response) &&
                     AlexaAsset.getDirectiveOfType(response, ClearQueueDirective.class)
                             .filter(d -> d.getClearBehavior() != null)
                             .isPresent();
