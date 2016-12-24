@@ -309,4 +309,50 @@ public class AlexaAssetTest {
         Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.equals(envelope, AssetFactory.DEFAULT_TEXT + " "));
         Assert.assertFalse(AlexaAsset.RepromptSpeechSsml.equals(envelope, "<speak>" + AssetFactory.DEFAULT_TEXT + "</speak>"));
     }
+
+    @Test
+    public void outputSpeechSsmlMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSsmlOutputSpeech();
+        final String patternPositive = ".*" + AssetFactory.DEFAULT_TEXT + ".*";
+        final String patternNegative = "[abc]";
+
+        Assert.assertTrue(AlexaAsset.OutputSpeech.matches(envelope, patternPositive));
+        Assert.assertTrue(AlexaAsset.OutputSpeechSsml.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.OutputSpeechSsml.matches(envelope, patternNegative));
+        Assert.assertFalse(AlexaAsset.OutputSpeechPlainText.equals(envelope, patternPositive));
+
+        Assert.assertTrue(AlexaAsset.RepromptSpeech.matches(envelope, patternPositive));
+        Assert.assertTrue(AlexaAsset.RepromptSpeechSsml.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechSsml.matches(envelope, patternNegative));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.matches(envelope, patternPositive + " "));
+    }
+
+    @Test
+    public void outputSpeechPlainMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlainOutputSpeech();
+        final String patternPositive = ".*" + AssetFactory.DEFAULT_TEXT + ".*";
+        final String patternNegative = "[abc]";
+
+        Assert.assertTrue(AlexaAsset.OutputSpeech.matches(envelope, patternPositive));
+        Assert.assertTrue(AlexaAsset.OutputSpeechPlainText.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.OutputSpeechPlainText.matches(envelope, patternNegative));
+        Assert.assertFalse(AlexaAsset.OutputSpeechSsml.matches(envelope, patternPositive));
+
+        Assert.assertTrue(AlexaAsset.RepromptSpeech.matches(envelope, patternPositive));
+        Assert.assertTrue(AlexaAsset.RepromptSpeechPlainText.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.matches(envelope, patternNegative));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechSsml.matches(envelope, patternPositive));
+    }
+
+    @Test
+    public void outputSpeechWithoutRepromptMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlainOutputSpeech("text", true);
+        final String patternPositive = ".*" + AssetFactory.DEFAULT_TEXT + ".*";
+        final String patternNegative = "[abc]";
+
+        Assert.assertFalse(AlexaAsset.RepromptSpeech.equals(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.equals(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechPlainText.equals(envelope, patternNegative));
+        Assert.assertFalse(AlexaAsset.RepromptSpeechSsml.equals(envelope, patternPositive));
+    }
 }

@@ -10,6 +10,7 @@ import com.amazon.speech.ui.PlainTextOutputSpeech;
 import com.amazon.speech.ui.SsmlOutputSpeech;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -371,6 +372,137 @@ public enum AlexaAsset implements AlexaAssetValidator {
             return AlexaAsset.directiveMatches(response, PlayDirective.class, pattern);
         }
     },
+    DirectivePlayBehavior {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlay.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getPlayBehavior() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.stringEquals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getPlayBehavior(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getPlayBehavior(), pattern);
+        }
+    },
+    DirectivePlayAudioItem {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlay.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getAudioItem() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem(), pattern);
+        }
+    },
+    DirectivePlayAudioItemStream {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlayAudioItem.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getAudioItem().getStream() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream(), pattern);
+        }
+    },
+    DirectivePlayAudioItemStreamPreviousToken {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlayAudioItemStream.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getAudioItem().getStream().getExpectedPreviousToken() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getExpectedPreviousToken(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getExpectedPreviousToken(), pattern);
+        }
+    },
+    DirectivePlayAudioItemStreamOffset {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            // long cannot be null so it always exists - somehow
+            return DirectivePlayAudioItemStream.exists(response);
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.stringEquals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getOffsetInMilliseconds(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getOffsetInMilliseconds(), pattern);
+        }
+    },
+    DirectivePlayAudioItemStreamToken {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlayAudioItemStream.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getAudioItem().getStream().getToken() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getToken(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getToken(), pattern);
+        }
+    },
+    DirectivePlayAudioItemStreamUrl {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlayAudioItemStream.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, PlayDirective.class)
+                            .filter(d -> d.getAudioItem().getStream().getUrl() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getUrl(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream().getUrl(), pattern);
+        }
+    },
     DirectiveClearQueue {
         @Override
         public boolean exists(SpeechletResponseEnvelope response) {
@@ -385,6 +517,25 @@ public enum AlexaAsset implements AlexaAssetValidator {
         @Override
         public boolean matches(SpeechletResponseEnvelope response, String pattern) {
             return AlexaAsset.directiveMatches(response, ClearQueueDirective.class, pattern);
+        }
+    },
+    DirectiveClearQueueBehavior {
+        @Override
+        public boolean exists(SpeechletResponseEnvelope response) {
+            return DirectivePlay.exists(response) &&
+                    AlexaAsset.getDirectiveOfType(response, ClearQueueDirective.class)
+                            .filter(d -> d.getClearBehavior() != null)
+                            .isPresent();
+        }
+
+        @Override
+        public boolean equals(SpeechletResponseEnvelope response, Object value) {
+            return this.exists(response) && AlexaAsset.stringEquals(AlexaAsset.getDirectiveOfType(response, ClearQueueDirective.class).get().getClearBehavior(), value);
+        }
+
+        @Override
+        public boolean matches(SpeechletResponseEnvelope response, String pattern) {
+            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, ClearQueueDirective.class).get().getClearBehavior(), pattern);
         }
     },
     DirectiveStop {
@@ -410,6 +561,10 @@ public enum AlexaAsset implements AlexaAssetValidator {
 
     private static boolean equals(final Object o, final Object value) {
         return (!exists(o) && value == null) || o.equals(value);
+    }
+
+    private static boolean stringEquals(final Object o, final Object value) {
+        return (!exists(o) && value == null) || (o != null && value != null && o.toString().equals(value.toString()));
     }
 
     private static boolean matches(final Object o, final String pattern) {
