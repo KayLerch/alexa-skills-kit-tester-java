@@ -3,6 +3,9 @@ package io.klerch.alexa.tester.asset;
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.amazon.speech.speechlet.interfaces.audioplayer.ClearBehavior;
 import com.amazon.speech.speechlet.interfaces.audioplayer.PlayBehavior;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.ClearQueueDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
+import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.StandardCard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.klerch.alexa.tester.AssetFactory;
@@ -404,5 +407,199 @@ public class AlexaAssetTest {
         Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.exists(envelope));
         Assert.assertFalse(AlexaAsset.DirectivePlay.exists(envelope));
         Assert.assertFalse(AlexaAsset.DirectiveStop.exists(envelope));
+    }
+
+    @Test
+    public void directivePlayEquals() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ALL);
+        final ObjectMapper mapper = new ObjectMapper();
+        final PlayDirective playDirective = (PlayDirective)envelope.getResponse().getDirectives().get(0);
+        final String directiveJson = mapper.writeValueAsString(playDirective);
+        final String audioItemJson = mapper.writeValueAsString(playDirective.getAudioItem());
+        final String streamJson = mapper.writeValueAsString(playDirective.getAudioItem().getStream());
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.equals(envelope, directiveJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.equals(envelope, audioItemJson));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.equals(envelope, PlayBehavior.REPLACE_ALL));
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.equals(envelope, PlayBehavior.REPLACE_ALL.name()));
+        Assert.assertFalse(AlexaAsset.DirectivePlayBehavior.equals(envelope, PlayBehavior.REPLACE_ENQUEUED.name()));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItem.equals(envelope, audioItemJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItem.equals(envelope, directiveJson));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStream.equals(envelope, streamJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStream.equals(envelope, audioItemJson));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamOffset.equals(envelope, AssetFactory.DEFAULT_AP_OFFSET));
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamOffset.equals(envelope, String.valueOf(AssetFactory.DEFAULT_AP_OFFSET)));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.equals(envelope, AssetFactory.DEFAULT_AP_OFFSET + 1));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.equals(envelope, AssetFactory.DEFAULT_AP_PREVIOUS_TOKEN));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.equals(envelope, AssetFactory.DEFAULT_AP_PREVIOUS_TOKEN + " "));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamToken.equals(envelope, AssetFactory.DEFAULT_AP_TOKEN));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamToken.equals(envelope, AssetFactory.DEFAULT_AP_TOKEN + " "));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamUrl.equals(envelope, AssetFactory.DEFAULT_AP_URL));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamUrl.equals(envelope, AssetFactory.DEFAULT_AP_URL + " "));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED, false);
+        final PlayDirective playDirective2 = (PlayDirective)envelope2.getResponse().getDirectives().get(0);
+        final String directiveJson2 = mapper.writeValueAsString(playDirective2);
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.equals(envelope2, directiveJson2));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.equals(envelope2, PlayBehavior.REPLACE_ENQUEUED));
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.equals(envelope2, PlayBehavior.REPLACE_ENQUEUED.name()));
+
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItem.equals(envelope2, audioItemJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStream.equals(envelope2, streamJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.equals(envelope2, AssetFactory.DEFAULT_AP_OFFSET));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.equals(envelope2, String.valueOf(AssetFactory.DEFAULT_AP_OFFSET)));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.equals(envelope2, AssetFactory.DEFAULT_AP_PREVIOUS_TOKEN));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamToken.equals(envelope2, AssetFactory.DEFAULT_AP_TOKEN));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamUrl.equals(envelope2, AssetFactory.DEFAULT_AP_URL));
+
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectivePlay.equals(envelope3, directiveJson2));
+    }
+
+    @Test
+    public void directiveClearQueueEquals() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ALL);
+        final ObjectMapper mapper = new ObjectMapper();
+        final ClearQueueDirective clearQueueDirective = (ClearQueueDirective)envelope.getResponse().getDirectives().get(0);
+        final String directiveJson = mapper.writeValueAsString(clearQueueDirective);
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueue.equals(envelope, directiveJson));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.equals(envelope, directiveJson));
+        Assert.assertFalse(AlexaAsset.DirectiveStop.equals(envelope, directiveJson));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.equals(envelope, "{}"));
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope, ClearBehavior.CLEAR_ALL));
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope, ClearBehavior.CLEAR_ALL.name()));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope, ClearBehavior.CLEAR_ENQUEUED));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope, ClearBehavior.CLEAR_ENQUEUED.name()));
+
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ENQUEUED);
+        final ClearQueueDirective clearQueueDirective2 = (ClearQueueDirective)envelope2.getResponse().getDirectives().get(0);
+        final String directiveJson2 = mapper.writeValueAsString(clearQueueDirective2);
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueue.equals(envelope2, directiveJson2));
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope2, ClearBehavior.CLEAR_ENQUEUED));
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope2, ClearBehavior.CLEAR_ENQUEUED.name()));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope2, ClearBehavior.CLEAR_ALL));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.equals(envelope2, ClearBehavior.CLEAR_ALL.name()));
+
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.equals(envelope3, directiveJson2));
+    }
+
+    @Test
+    public void directiveStopEquals() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithStopDirective();
+        final ObjectMapper mapper = new ObjectMapper();
+        final StopDirective stopDirective = (StopDirective)envelope.getResponse().getDirectives().get(0);
+        final String directiveJson = mapper.writeValueAsString(stopDirective);
+
+        Assert.assertTrue(AlexaAsset.DirectiveStop.equals(envelope, directiveJson));
+        Assert.assertFalse(AlexaAsset.DirectiveStop.equals(envelope, "{}"));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.equals(envelope, directiveJson));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectivePlay.equals(envelope2, directiveJson));
+    }
+
+    @Test
+    public void directivePlayMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ALL);
+
+        final String patternPositive = ".*" + AssetFactory.DEFAULT_AP_URL +
+                ".*|.*" + AssetFactory.DEFAULT_AP_TOKEN + ".*" +
+                ".*|.*" + AssetFactory.DEFAULT_AP_PREVIOUS_TOKEN + ".*" +
+                ".*|.*" + String.valueOf(AssetFactory.DEFAULT_AP_OFFSET) + ".*";
+        final String patternNegative = "[abc]";
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.matches(envelope, ".*" + PlayBehavior.REPLACE_ALL + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectivePlayBehavior.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItem.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItem.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStream.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStream.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamOffset.matches(envelope, ".*" + String.valueOf(AssetFactory.DEFAULT_AP_OFFSET) + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.matches(envelope, String.valueOf(AssetFactory.DEFAULT_AP_OFFSET + 1)));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamToken.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamToken.matches(envelope, patternNegative));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayAudioItemStreamUrl.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamUrl.matches(envelope, patternNegative));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED, false);
+
+        Assert.assertTrue(AlexaAsset.DirectivePlay.matches(envelope2, ".*" + PlayBehavior.REPLACE_ENQUEUED + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectivePlay.matches(envelope2, ".*" + PlayBehavior.REPLACE_ALL + ".*"));
+
+        Assert.assertTrue(AlexaAsset.DirectivePlayBehavior.matches(envelope2, ".*" + PlayBehavior.REPLACE_ENQUEUED.name() + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectivePlayBehavior.matches(envelope2, ".*" + PlayBehavior.REPLACE_ALL.name() + ".*"));
+
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItem.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStream.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamOffset.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamPreviousToken.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamToken.matches(envelope2, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectivePlayAudioItemStreamUrl.matches(envelope2, patternPositive));
+
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectivePlay.matches(envelope3, patternPositive));
+    }
+
+    @Test
+    public void directiveStopMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithStopDirective();
+
+        final String patternPositive = ".*Stop.*";
+        final String patternNegative = "[abc]";
+
+        Assert.assertTrue(AlexaAsset.DirectiveStop.matches(envelope, patternPositive));
+        Assert.assertFalse(AlexaAsset.DirectiveStop.matches(envelope, patternNegative));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectiveStop.matches(envelope2, patternPositive));
+    }
+
+    @Test
+    public void directiveClearQueueMatches() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ALL);
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueue.matches(envelope, ".*" + ClearBehavior.CLEAR_ALL.name() + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.matches(envelope, ".*" + ClearBehavior.CLEAR_ENQUEUED.name() + ".*"));
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.matches(envelope, ".*" + ClearBehavior.CLEAR_ALL.name() + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.matches(envelope, ".*" + ClearBehavior.CLEAR_ENQUEUED.name() + ".*"));
+
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ENQUEUED);
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueue.matches(envelope2, ".*" + ClearBehavior.CLEAR_ENQUEUED.name() + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.matches(envelope2, ".*" + ClearBehavior.CLEAR_ALL.name() + ".*"));
+
+        Assert.assertTrue(AlexaAsset.DirectiveClearQueueBehavior.matches(envelope2, ".*" + ClearBehavior.CLEAR_ENQUEUED.name() + ".*"));
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueueBehavior.matches(envelope2, ".*" + ClearBehavior.CLEAR_ALL.name() + ".*"));
+
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        Assert.assertFalse(AlexaAsset.DirectiveClearQueue.matches(envelope3, ".*" + ClearBehavior.CLEAR_ALL.name() + ".*"));
     }
 }

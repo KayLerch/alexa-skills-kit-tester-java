@@ -402,13 +402,24 @@ public enum AlexaAsset implements AlexaAssetValidator {
 
         @Override
         public boolean equals(SpeechletResponseEnvelope response, Object value) {
-            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem(), value);
+            final ObjectMapper mapper = new ObjectMapper();
+            try {
+                return this.exists(response) && AlexaAsset.equals(mapper.writeValueAsString(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem()), value);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
 
         @Override
         public boolean matches(SpeechletResponseEnvelope response, String pattern) {
-            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem(), pattern);
-        }
+            final ObjectMapper mapper = new ObjectMapper();
+            try {
+                return this.exists(response) && AlexaAsset.matches(mapper.writeValueAsString(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem()), pattern);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return false;
+            }}
     },
     DirectivePlayAudioItemStream {
         @Override
@@ -421,12 +432,24 @@ public enum AlexaAsset implements AlexaAssetValidator {
 
         @Override
         public boolean equals(SpeechletResponseEnvelope response, Object value) {
-            return this.exists(response) && AlexaAsset.equals(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream(), value);
+            final ObjectMapper mapper = new ObjectMapper();
+            try {
+                return this.exists(response) && AlexaAsset.equals(mapper.writeValueAsString(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream()), value);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
 
         @Override
         public boolean matches(SpeechletResponseEnvelope response, String pattern) {
-            return this.exists(response) && AlexaAsset.matches(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream(), pattern);
+            final ObjectMapper mapper = new ObjectMapper();
+            try {
+                return this.exists(response) && AlexaAsset.matches(mapper.writeValueAsString(AlexaAsset.getDirectiveOfType(response, PlayDirective.class).get().getAudioItem().getStream()), pattern);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
     },
     DirectivePlayAudioItemStreamPreviousToken {
@@ -601,9 +624,9 @@ public enum AlexaAsset implements AlexaAssetValidator {
 
     @SuppressWarnings("unchecked")
     private static <TDirective extends Directive> Optional<TDirective> getDirectiveOfType(SpeechletResponseEnvelope response, Class<TDirective> directiveClass) {
-        return response.getResponse().getDirectives().stream()
+        return response.getResponse().getDirectives() != null ? response.getResponse().getDirectives().stream()
                 .filter(directiveClass::isInstance)
                 .map(directive -> (TDirective)directive)
-                .findFirst();
+                .findFirst() : Optional.empty();
     }
 }
