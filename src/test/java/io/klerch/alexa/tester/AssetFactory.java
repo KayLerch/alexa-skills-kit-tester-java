@@ -1,6 +1,9 @@
 package io.klerch.alexa.tester;
 
+import com.amazon.speech.json.SpeechletRequestEnvelope;
 import com.amazon.speech.json.SpeechletResponseEnvelope;
+import com.amazon.speech.speechlet.IntentRequest;
+import com.amazon.speech.speechlet.LaunchRequest;
 import com.amazon.speech.speechlet.SpeechletResponse;
 import com.amazon.speech.speechlet.interfaces.audioplayer.AudioItem;
 import com.amazon.speech.speechlet.interfaces.audioplayer.ClearBehavior;
@@ -16,15 +19,18 @@ import io.klerch.alexa.tester.actor.AlexaSessionActor;
 import io.klerch.alexa.tester.client.AlexaUnitClient;
 
 import java.io.*;
+import java.lang.invoke.LambdaConversionException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class AssetFactory {
     public static final String DEFAULT_APP_ID = "app-id";
     public static final String DEFAULT_AP_PREVIOUS_TOKEN = "previous Token";
     public static final String DEFAULT_AP_URL = "https://stream/stream.mp3";
     public static final String DEFAULT_AP_TOKEN = "token";
+    public static final String SESSION_KEY_WITH_INTENT_NAME = "intent";
     public static final long DEFAULT_AP_OFFSET = 1000L;
 
     public static final String DEFAULT_VERSION = "1.0.0";
@@ -187,7 +193,37 @@ public class AssetFactory {
     }
 
     public static RequestStreamHandler givenRequestStreamHandlerThatReturns(final SpeechletResponseEnvelope response) {
-        return (inputStream, outputStream, context) -> response.toJson(outputStream);
+        return (inputStream, outputStream, context) -> {
+            final SpeechletRequestEnvelope envelope = SpeechletRequestEnvelope.fromJson(inputStream);
+            final Map<String, Object> attributes = new HashMap<>();
+            // set intent as session attribute
+            if (envelope.getRequest() instanceof IntentRequest) {
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, ((IntentRequest)envelope.getRequest()).getIntent().getName());
+            } else if (envelope.getRequest() instanceof LaunchRequest) {
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, "launch");
+            }
+            // set session attribute
+            response.setSessionAttributes(attributes);
+            response.toJson(outputStream);
+        };
     }
 
+    public static RequestStreamHandler givenRequestStreamHandlerThatReturns(final SpeechletResponseEnvelope response, final String sessionAttributeKey, final Object sessionAttributeVal) {
+        return (inputStream, outputStream, context) -> {
+            final SpeechletRequestEnvelope envelope = SpeechletRequestEnvelope.fromJson(inputStream);
+
+            final Map<String, Object> attributes = new HashMap<>();
+            attributes.put(sessionAttributeKey, sessionAttributeVal);
+
+            // set intent as session attribute
+            if (envelope.getRequest() instanceof IntentRequest) {
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, ((IntentRequest)envelope.getRequest()).getIntent().getName());
+            } else if (envelope.getRequest() instanceof LaunchRequest) {
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, "launch");
+            }
+            // set session attribute
+            response.setSessionAttributes(attributes);
+            response.toJson(outputStream);
+        };
+    }
 }
