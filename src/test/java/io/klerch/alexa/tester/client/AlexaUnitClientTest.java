@@ -1,7 +1,10 @@
 package io.klerch.alexa.tester.client;
 
+import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.amazonaws.services.lambda.runtime.*;
 import io.klerch.alexa.tester.AssetFactory;
+import io.klerch.alexa.tester.request.AlexaIntentRequest;
+import io.klerch.alexa.tester.response.AlexaResponse;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -9,7 +12,7 @@ import org.junit.rules.ExpectedException;
 
 import java.util.Locale;
 
-public class AlexaUnitTestTest {
+public class AlexaUnitClientTest {
     @Rule
     public ExpectedException exception = ExpectedException.none();
 
@@ -55,7 +58,10 @@ public class AlexaUnitTestTest {
 
     @Test
     public void fire() throws Exception {
-
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSessionAttribute("attr", true);
+        final RequestStreamHandler handler = AssetFactory.givenRequestStreamHandlerThatReturns(envelope);
+        final AlexaUnitClient client = AlexaUnitClient.create("appId", handler).build();
+        //final AlexaResponse response = client.fire(AssetFactory.givenRe)
     }
 
     private Context getContext() {

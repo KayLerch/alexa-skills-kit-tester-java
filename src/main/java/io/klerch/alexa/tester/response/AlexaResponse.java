@@ -34,32 +34,32 @@ public class AlexaResponse {
     }
 
     public AlexaResponse assertTrue(final AlexaAssertion assertion){
-        Validate.isTrue(assertion.isTrue(envelope), "Assertion '$1%s' is not true in $2%s", assertion.name(), request);
+        Validate.isTrue(assertion.isTrue(envelope), "Assertion '%1$s' is not true in %2$s", assertion.name(), request);
         return this;
     }
 
     public AlexaResponse assertFalse(final AlexaAssertion assertion){
-        Validate.isTrue(!assertion.isTrue(envelope), "Assertion '$1%s' is true in $2%s", assertion.name(), request);
+        Validate.isTrue(!assertion.isTrue(envelope), "Assertion '%1$s' is true in %2$s", assertion.name(), request);
         return this;
     }
 
     public AlexaResponse assertExists(final AlexaAsset asset){
-        Validate.isTrue(asset.exists(envelope), "Asset '$1%s' does not exist in $2%s", asset.name(), request);
+        Validate.isTrue(asset.exists(envelope), "Asset '%1$s' does not exist in %2$s", asset.name(), request);
         return this;
     }
 
     public AlexaResponse assertNotExists(final AlexaAsset asset){
-        Validate.isTrue(!asset.exists(envelope), "Asset '$1%s' does not exist in $2%s", asset.name(), request);
+        Validate.isTrue(!asset.exists(envelope), "Asset '%1$s' does not exist in %2$s", asset.name(), request);
         return this;
     }
 
     public AlexaResponse assertEquals(final AlexaAsset asset, final Object value){
-        Validate.isTrue(asset.equals(envelope, value), "Asset '$1%s' is not equal to '$2%s' in $3%s", asset.name(), value, request);
+        Validate.isTrue(asset.equals(envelope, value), "Asset '%1$s' is not equal to '%2$s' in %3$s", asset.name(), value, request);
         return this;
     }
 
     public AlexaResponse assertNotEquals(final AlexaAsset asset, final Object value){
-        Validate.isTrue(!asset.equals(envelope, value), "Asset '$1%s' is not equal to '$2%s' in $3%s", asset.name(), value, request);
+        Validate.isTrue(!asset.equals(envelope, value), "Asset '%1$s' is not equal to '%2$s' in %3$s", asset.name(), value, request);
         return this;
     }
 
@@ -80,40 +80,40 @@ public class AlexaResponse {
     }
 
     public AlexaResponse assertSessionStateExists(final String key){
-        Validate.isTrue(envelope.getSessionAttributes().containsKey(key), "Session state with key '$1%s' does not exist in $2%s", key, request);
+        Validate.isTrue(envelope.getSessionAttributes().containsKey(key), "Session state with key '%1$s' does not exist in %2$s", key, request);
         return this;
     }
 
     public AlexaResponse assertSessionStateNotNull(final String key){
-        Validate.notNull(envelope.getSessionAttributes().get(key), "Session state with key '$1%s' is null in $2%s", key, request);
+        Validate.notNull(envelope.getSessionAttributes().get(key), "Session state with key '%1$s' is null in %2$s", key, request);
         return this;
     }
 
     public AlexaResponse assertSessionStateNotBlank(final String key){
         assertSessionStateNotNull(key);
-        Validate.notBlank(envelope.getSessionAttributes().get(key).toString(), "Session state with key '$1%s' is blank in $2%s", key, request);
+        Validate.notBlank(envelope.getSessionAttributes().get(key).toString(), "Session state with key '%1$s' is blank in %2$s", key, request);
         return this;
     }
 
     public AlexaResponse assertSessionStateEquals(final String key, final Object value){
         if (value != null) {
             assertSessionStateNotNull(key);
-            Validate.isTrue(envelope.getSessionAttributes().get(key).equals(value), "Session state with key '$1%s' is not equal to '$2%s' in $3%s", key, value, request);
+            Validate.isTrue(envelope.getSessionAttributes().get(key).equals(value), "Session state with key '%1$s' is not equal to '%2$s' in %3$s", key, value, request);
         } else {
-            Validate.isTrue(envelope.getSessionAttributes().getOrDefault(key, null) == null, "Session state with key '$1%s' is not null in $3%s", key, request);
+            Validate.isTrue(envelope.getSessionAttributes().getOrDefault(key, null) == null, "Session state with key '%1$s' is not null in %2$s", key, request);
         }
         return this;
     }
 
     public AlexaResponse assertSessionStateContains(final String key, final String subString){
         assertSessionStateNotNull(key);
-        Validate.isTrue(StringUtils.contains(envelope.getSessionAttributes().get(key).toString(), subString), "Session state with key '$1%s' containing '$2%s' expected, but was not found in $3%s", key, subString, request);
+        Validate.isTrue(StringUtils.contains(envelope.getSessionAttributes().get(key).toString(), subString), "Session state with key '%1$s' containing '%2$s' expected, but was not found in %3$s", key, subString, request);
         return this;
     }
 
     public AlexaResponse assertSessionStateMatches(final String key, final String regex){
         assertSessionStateNotNull(key);
-        Validate.matchesPattern(envelope.getSessionAttributes().get(key).toString(), regex, "Session state with key '$1%s' matches pattern of '$2%s' expected, but did not match in $3%s", key, regex, request);
+        Validate.matchesPattern(envelope.getSessionAttributes().get(key).toString(), regex, "Session state with key '%1$s' matches pattern of '%2$s' expected, but did not match in %3$s", key, regex, request);
         return this;
     }
 }

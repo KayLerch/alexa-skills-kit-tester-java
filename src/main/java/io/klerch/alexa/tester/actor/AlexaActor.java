@@ -5,14 +5,14 @@ import io.klerch.alexa.tester.client.AlexaClient;
 import io.klerch.alexa.tester.request.AlexaRequest;
 import io.klerch.alexa.tester.response.AlexaResponse;
 
-public abstract class AlexaActor<TClient extends AlexaClient> {
-    final TClient client;
+public abstract class AlexaActor {
+    final AlexaClient client;
 
-    public AlexaActor(final TClient client) {
+    public AlexaActor(final AlexaClient client) {
         this.client = client;
     }
 
-    public TClient getClient() {
+    public AlexaClient getClient() {
         return this.client;
     }
 

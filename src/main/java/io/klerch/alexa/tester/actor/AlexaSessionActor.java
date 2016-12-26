@@ -13,11 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class AlexaSessionActor<TClient extends AlexaClient> extends AlexaActor<TClient> {
+public class AlexaSessionActor extends AlexaActor {
     final Session session;
     boolean sessionClosed;
 
-    public AlexaSessionActor(final TClient client) {
+    public AlexaSessionActor(final AlexaClient client) {
         super(client);
         this.sessionClosed = false;
         this.session = Session.builder()

@@ -7,78 +7,76 @@ import io.klerch.alexa.tester.AssetFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class AlexaAssertionTest {
     @Test
     public void sessionEnded() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSsmlOutputSpeech("test", true);
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSsmlOutputSpeech("test", true);
         Assert.assertTrue(AlexaAssertion.SessionEnded.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSsmlOutputSpeech("test", false);
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithSsmlOutputSpeech("test", false);
         Assert.assertFalse(AlexaAssertion.SessionEnded.isTrue(envelope2));
     }
 
     @Test
     public void sessionStillOpen() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSsmlOutputSpeech("test", false);
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSsmlOutputSpeech("test", false);
         Assert.assertTrue(AlexaAssertion.SessionStillOpen.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSsmlOutputSpeech("test", true);
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithSsmlOutputSpeech("test", true);
         Assert.assertFalse(AlexaAssertion.SessionStillOpen.isTrue(envelope2));
     }
 
     @Test
     public void sessionHasCard() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSimpleCard();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSimpleCard();
         Assert.assertTrue(AlexaAssertion.HasCard.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithStandardCard();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithStandardCard();
         Assert.assertTrue(AlexaAssertion.HasCard.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithLinkAccountCard();
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithLinkAccountCard();
         Assert.assertTrue(AlexaAssertion.HasCard.isTrue(envelope3));
     }
 
     @Test
     public void sessionHasCardIsSimple() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSimpleCard();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSimpleCard();
         Assert.assertTrue(AlexaAssertion.HasCardIsSimple.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithStandardCard();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithStandardCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsSimple.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithLinkAccountCard();
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithLinkAccountCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsSimple.isTrue(envelope3));
     }
 
     @Test
     public void sessionHasCardIsStandard() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithStandardCard();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithStandardCard();
         Assert.assertTrue(AlexaAssertion.HasCardIsStandard.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSimpleCard();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithSimpleCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsStandard.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithLinkAccountCard();
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithLinkAccountCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsStandard.isTrue(envelope3));
     }
 
     @Test
     public void sessionHasCardIsLinkAccount() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithLinkAccountCard();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithLinkAccountCard();
         Assert.assertTrue(AlexaAssertion.HasCardIsLinkAccount.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithSimpleCard();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithSimpleCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsLinkAccount.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithStandardCard();
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithStandardCard();
         Assert.assertFalse(AlexaAssertion.HasCardIsLinkAccount.isTrue(envelope3));
     }
 
     @Test
     public void repromptSpeech() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSsmlOutputSpeech();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSsmlOutputSpeech();
         Assert.assertTrue(AlexaAssertion.HasRepromptSpeech.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasRepromptSpeechIsSsml.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasRepromptSpeechIsPlainText.isTrue(envelope));
@@ -88,7 +86,7 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasRepromptSpeechIsSsml.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasRepromptSpeechIsPlainText.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlainOutputSpeech();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithPlainOutputSpeech();
         Assert.assertTrue(AlexaAssertion.HasRepromptSpeech.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasRepromptSpeechIsPlainText.isTrue(envelope2));
         Assert.assertFalse(AlexaAssertion.HasRepromptSpeechIsSsml.isTrue(envelope2));
@@ -96,7 +94,7 @@ public class AlexaAssertionTest {
 
     @Test
     public void outputSpeech() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithSsmlOutputSpeech();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSsmlOutputSpeech();
         Assert.assertTrue(AlexaAssertion.HasOutputSpeech.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasOutputSpeechIsSsml.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasOutputSpeechIsPlainText.isTrue(envelope));
@@ -106,7 +104,7 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasOutputSpeechIsSsml.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasOutputSpeechIsPlainText.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlainOutputSpeech();
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithPlainOutputSpeech();
         Assert.assertTrue(AlexaAssertion.HasOutputSpeech.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasOutputSpeechIsPlainText.isTrue(envelope2));
         Assert.assertFalse(AlexaAssertion.HasOutputSpeechIsSsml.isTrue(envelope2));
@@ -114,7 +112,7 @@ public class AlexaAssertionTest {
 
     @Test
     public void directivePlay() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ALL);
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithPlayDirective(PlayBehavior.REPLACE_ALL);
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlay.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlayWithReplaceAll.isTrue(envelope));
@@ -125,14 +123,14 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearAll.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearEnqueued.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED);
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED);
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlay.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlayWithReplaceEnqueued.isTrue(envelope2));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsPlayWithReplaceAll.isTrue(envelope2));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsPlayWithEnqueue.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.ENQUEUE);
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithPlayDirective(PlayBehavior.ENQUEUE);
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope3));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlay.isTrue(envelope3));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsPlayWithEnqueue.isTrue(envelope3));
@@ -142,7 +140,7 @@ public class AlexaAssertionTest {
 
     @Test
     public void directiveStop() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithStopDirective();
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithStopDirective();
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsStop.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsPlay.isTrue(envelope));
@@ -153,13 +151,13 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearAll.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearEnqueued.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED);
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithPlayDirective(PlayBehavior.REPLACE_ENQUEUED);
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsStop.isTrue(envelope2));
     }
 
     @Test
     public void directiveClearQueue() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ALL);
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithClearQueueDirective(ClearBehavior.CLEAR_ALL);
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsClearQueue.isTrue(envelope));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsClearQueueWithClearAll.isTrue(envelope));
@@ -170,7 +168,7 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsStop.isTrue(envelope));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearEnqueued.isTrue(envelope));
 
-        final SpeechletResponseEnvelope envelope2 = AssetFactory.getResponseWithClearQueueDirective(ClearBehavior.CLEAR_ENQUEUED);
+        final SpeechletResponseEnvelope envelope2 = AssetFactory.givenResponseWithClearQueueDirective(ClearBehavior.CLEAR_ENQUEUED);
         Assert.assertTrue(AlexaAssertion.HasDirective.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsClearQueue.isTrue(envelope2));
         Assert.assertTrue(AlexaAssertion.HasDirectiveIsClearQueueWithClearEnqueued.isTrue(envelope2));
@@ -181,7 +179,7 @@ public class AlexaAssertionTest {
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsStop.isTrue(envelope2));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearAll.isTrue(envelope2));
 
-        final SpeechletResponseEnvelope envelope3 = AssetFactory.getResponseWithSsmlOutputSpeech();
+        final SpeechletResponseEnvelope envelope3 = AssetFactory.givenResponseWithSsmlOutputSpeech();
         Assert.assertFalse(AlexaAssertion.HasDirective.isTrue(envelope3));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueue.isTrue(envelope3));
         Assert.assertFalse(AlexaAssertion.HasDirectiveIsClearQueueWithClearEnqueued.isTrue(envelope3));
