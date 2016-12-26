@@ -198,16 +198,16 @@ public class AlexaResponseTest {
     @Test
     public void assertSessionStateEquals() throws Exception {
         final AlexaResponse response = givenResponse(AssetFactory.givenResponseWithSessionAttribute("attr", true));
-        Assert.assertEquals(response, response.assertSessionStateEquals("attr", true));
+        Assert.assertEquals(response, response.assertSessionStateEquals("attr", "true"));
 
         exception.expect(IllegalArgumentException.class);
-        Assert.assertEquals(response, response.assertSessionStateEquals("attr", 123));
+        Assert.assertEquals(response, response.assertSessionStateEquals("attr", "123"));
 
         final AlexaResponse response2 = givenResponse(AssetFactory.givenResponseWithSessionAttribute("attr", 321));
-        Assert.assertEquals(response2, response2.assertSessionStateEquals("attr", 321));
+        Assert.assertEquals(response2, response2.assertSessionStateEquals("attr", "321"));
 
         final AlexaResponse response3 = givenResponse(AssetFactory.givenResponseWithSessionAttribute("attr", 32.61));
-        Assert.assertEquals(response3, response3.assertSessionStateEquals("attr", 32.61));
+        Assert.assertEquals(response3, response3.assertSessionStateEquals("attr", "32.61"));
     }
 
     @Test

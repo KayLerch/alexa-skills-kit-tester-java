@@ -93,7 +93,7 @@ public class AlexaSessionActor extends AlexaActor {
         );
     }
 
-    public AlexaResponse intent(final AlexaIntentRequest request) {
+    private AlexaResponse intent(final AlexaIntentRequest request) {
         return client.fire(request).orElseThrow(() ->
                 new RuntimeException("Intent Request did not receive a response.")
         );

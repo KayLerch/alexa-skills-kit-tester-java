@@ -195,10 +195,15 @@ public class AssetFactory {
     public static RequestStreamHandler givenRequestStreamHandlerThatReturns(final SpeechletResponseEnvelope response) {
         return (inputStream, outputStream, context) -> {
             final SpeechletRequestEnvelope envelope = SpeechletRequestEnvelope.fromJson(inputStream);
-            final Map<String, Object> attributes = new HashMap<>();
+            final Map<String, Object> attributes = envelope.getSession().getAttributes();
             // set intent as session attribute
             if (envelope.getRequest() instanceof IntentRequest) {
-                attributes.put(SESSION_KEY_WITH_INTENT_NAME, ((IntentRequest)envelope.getRequest()).getIntent().getName());
+                final IntentRequest intentRequest = (IntentRequest)envelope.getRequest();
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, intentRequest.getIntent().getName());
+                // set slots as session attributes
+                if (intentRequest.getIntent().getSlots() != null) {
+                    intentRequest.getIntent().getSlots().forEach(attributes::put);
+                }
             } else if (envelope.getRequest() instanceof LaunchRequest) {
                 attributes.put(SESSION_KEY_WITH_INTENT_NAME, "launch");
             }
@@ -211,13 +216,16 @@ public class AssetFactory {
     public static RequestStreamHandler givenRequestStreamHandlerThatReturns(final SpeechletResponseEnvelope response, final String sessionAttributeKey, final Object sessionAttributeVal) {
         return (inputStream, outputStream, context) -> {
             final SpeechletRequestEnvelope envelope = SpeechletRequestEnvelope.fromJson(inputStream);
-
-            final Map<String, Object> attributes = new HashMap<>();
+            final Map<String, Object> attributes = envelope.getSession().getAttributes();
             attributes.put(sessionAttributeKey, sessionAttributeVal);
-
             // set intent as session attribute
             if (envelope.getRequest() instanceof IntentRequest) {
-                attributes.put(SESSION_KEY_WITH_INTENT_NAME, ((IntentRequest)envelope.getRequest()).getIntent().getName());
+                final IntentRequest intentRequest = (IntentRequest)envelope.getRequest();
+                attributes.put(SESSION_KEY_WITH_INTENT_NAME, intentRequest.getIntent().getName());
+                // set slots as session attributes
+                if (intentRequest.getIntent().getSlots() != null) {
+                    intentRequest.getIntent().getSlots().forEach(attributes::put);
+                }
             } else if (envelope.getRequest() instanceof LaunchRequest) {
                 attributes.put(SESSION_KEY_WITH_INTENT_NAME, "launch");
             }
