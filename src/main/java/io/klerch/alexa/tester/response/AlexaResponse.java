@@ -2,7 +2,6 @@ package io.klerch.alexa.tester.response;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.klerch.alexa.tester.client.AlexaTestActor;
 import io.klerch.alexa.tester.asset.AlexaAssertion;
 import io.klerch.alexa.tester.asset.AlexaAsset;
 import io.klerch.alexa.tester.request.AlexaRequest;
@@ -13,9 +12,8 @@ import java.io.IOException;
 import java.util.Map;
 
 public class AlexaResponse {
-    public static AlexaResponse VOID = new AlexaResponse();
-    private final SpeechletResponseEnvelope envelope;
-    private final AlexaRequest request;
+    final SpeechletResponseEnvelope envelope;
+    final AlexaRequest request;
 
     public AlexaResponse(final AlexaRequest request, final byte[] payload) {
         this.request = request;
@@ -27,17 +25,8 @@ public class AlexaResponse {
         }
     }
 
-    private AlexaResponse() {
-        this.request = null;
-        this.envelope = null;
-    }
-
-    public boolean getShouldEndSession() {
-        return envelope.getResponse().getShouldEndSession();
-    }
-
-    public Map<String, Object> getSessionAttributes() {
-        return envelope.getSessionAttributes();
+    public boolean isEmpty() {
+        return request == null;
     }
 
     public AlexaResponse assertThat(final AlexaAssertion assertion) {
@@ -72,6 +61,22 @@ public class AlexaResponse {
     public AlexaResponse assertNotEquals(final AlexaAsset asset, final Object value){
         Validate.isTrue(!asset.equals(envelope, value), "Asset '$1%s' is not equal to '$2%s' in $3%s", asset.name(), value, request);
         return this;
+    }
+
+    public AlexaResponse assertSessionEnded(){
+        return assertTrue(AlexaAssertion.SessionEnded);
+    }
+
+    public AlexaResponse assertSessionStillOpen(){
+        return assertTrue(AlexaAssertion.SessionStillOpen);
+    }
+
+    public boolean getShouldEndSession() {
+        return envelope.getResponse().getShouldEndSession();
+    }
+
+    public Map<String, Object> getSessionAttributes() {
+        return envelope.getSessionAttributes();
     }
 
     public AlexaResponse assertSessionStateExists(final String key){
@@ -110,19 +115,5 @@ public class AlexaResponse {
         assertSessionStateNotNull(key);
         Validate.matchesPattern(envelope.getSessionAttributes().get(key).toString(), regex, "Session state with key '$1%s' matches pattern of '$2%s' expected, but did not match in $3%s", key, regex, request);
         return this;
-    }
-
-    public AlexaResponse assertSessionEnded(){
-        Validate.isTrue(envelope.getResponse().getShouldEndSession(), "ShouldEndSession expected to be true, but was false in %s", request);
-        return this;
-    }
-
-    public AlexaResponse assertSessionOpen(){
-        Validate.isTrue(!envelope.getResponse().getShouldEndSession(), "ShouldEndSession expected to be false, but was true in %s", request);
-        return this;
-    }
-
-    public AlexaTestActor done() {
-        return request.getActor();
     }
 }

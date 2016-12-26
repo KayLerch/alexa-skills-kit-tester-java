@@ -9,11 +9,13 @@ import io.klerch.alexa.tester.request.AlexaRequest;
 import io.klerch.alexa.tester.response.AlexaResponse;
 import org.apache.commons.lang3.Validate;
 
-public class AlexaSystemTest extends AlexaTest {
+import java.util.Optional;
+
+public class AlexaLambdaClient extends AlexaClient {
     private final AWSLambda lambdaClient;
     private final String lambdaFunctionName;
 
-    AlexaSystemTest(final AlexaSystemTestBuilder builder) {
+    AlexaLambdaClient(final AlexaSystemTestBuilder builder) {
         super(builder);
         this.lambdaClient = builder.lambdaClient;
         this.lambdaFunctionName = builder.lambdaFunctionName;
@@ -32,7 +34,7 @@ public class AlexaSystemTest extends AlexaTest {
     }
 
     @Override
-    public AlexaResponse fire(final AlexaRequest request, final String payload) {
+    public Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         final InvocationType invocationType = request.expectsResponse() ? InvocationType.RequestResponse : InvocationType.Event;
         final InvokeRequest invokeRequest = new InvokeRequest()
                 .withInvocationType(invocationType)
@@ -40,10 +42,10 @@ public class AlexaSystemTest extends AlexaTest {
                 .withPayload(payload);
         final InvokeResult invokeResult = lambdaClient.invoke(invokeRequest);
         return invocationType.equals(InvocationType.RequestResponse) ?
-                new AlexaResponse(request, invokeResult.getPayload().array()) : AlexaResponse.VOID;
+                Optional.of(new AlexaResponse(request, invokeResult.getPayload().array())) : Optional.empty();
     }
 
-    public static class AlexaSystemTestBuilder extends AlexaTestBuilder<AlexaSystemTest, AlexaSystemTestBuilder> {
+    public static class AlexaSystemTestBuilder extends AlexaTestBuilder<AlexaLambdaClient, AlexaSystemTestBuilder> {
         String lambdaFunctionName;
         AWSLambda lambdaClient;
 
@@ -58,7 +60,7 @@ public class AlexaSystemTest extends AlexaTest {
         }
 
         @Override
-        public AlexaSystemTest build() {
+        public AlexaLambdaClient build() {
             preBuild();
             Validate.notBlank(lambdaFunctionName, "Lambda function name must not be empty.");
 
@@ -66,7 +68,7 @@ public class AlexaSystemTest extends AlexaTest {
                 lambdaClient = new AWSLambdaClient();
             }
 
-            return new AlexaSystemTest(this);
+            return new AlexaLambdaClient(this);
         }
     }
 }

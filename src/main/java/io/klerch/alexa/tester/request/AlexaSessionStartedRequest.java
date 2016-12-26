@@ -2,12 +2,12 @@ package io.klerch.alexa.tester.request;
 
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.SessionStartedRequest;
-import io.klerch.alexa.tester.client.AlexaTestActor;
+import io.klerch.alexa.tester.actor.AlexaSessionActor;
 
 import java.util.*;
 
 public class AlexaSessionStartedRequest extends AlexaRequest {
-    public AlexaSessionStartedRequest(final AlexaTestActor actor) {
+    public AlexaSessionStartedRequest(final AlexaSessionActor actor) {
         super(actor);
     }
 

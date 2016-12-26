@@ -9,12 +9,13 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
-public class AlexaUnitTest extends AlexaTest {
+public class AlexaUnitClient extends AlexaClient {
     private final RequestStreamHandler requestStreamHandler;
     private final Context context;
 
-    AlexaUnitTest(final AlexaUnitTestBuilder builder) {
+    AlexaUnitClient(final AlexaUnitTestBuilder builder) {
         super(builder);
         this.requestStreamHandler = builder.requestStreamHandler;
         this.context = builder.context;
@@ -31,7 +32,7 @@ public class AlexaUnitTest extends AlexaTest {
     public Context getContext() { return context; }
 
     @Override
-    public AlexaResponse fire(final AlexaRequest request, final String payload) {
+    public Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final InputStream inputStream = new ByteArrayInputStream(payload.getBytes());
         try {
@@ -39,12 +40,11 @@ public class AlexaUnitTest extends AlexaTest {
         } catch (final IOException e) {
             throw new RuntimeException("Error on invoking request stream handler.", e);
         }
-
         return request.expectsResponse() ?
-                new AlexaResponse(request, outputStream.toByteArray()) : AlexaResponse.VOID;
+                Optional.of(new AlexaResponse(request, outputStream.toByteArray())) : Optional.empty();
     }
 
-    public static class AlexaUnitTestBuilder extends AlexaTestBuilder<AlexaUnitTest, AlexaUnitTestBuilder> {
+    public static class AlexaUnitTestBuilder extends AlexaTestBuilder<AlexaUnitClient, AlexaUnitTestBuilder> {
         RequestStreamHandler requestStreamHandler;
         Context context;
 
@@ -59,7 +59,7 @@ public class AlexaUnitTest extends AlexaTest {
         }
 
         @Override
-        public AlexaUnitTest build() {
+        public AlexaUnitClient build() {
             preBuild();
             Validate.notNull(requestStreamHandler, "Request stream handler must not be null.");
 
@@ -67,7 +67,7 @@ public class AlexaUnitTest extends AlexaTest {
                 context = getContext();
             }
 
-            return new AlexaUnitTest(this);
+            return new AlexaUnitClient(this);
         }
 
         private Context getContext() {

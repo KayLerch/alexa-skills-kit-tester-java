@@ -2,15 +2,16 @@ package io.klerch.alexa.tester.request;
 
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.klerch.alexa.tester.client.AlexaTestActor;
+import io.klerch.alexa.tester.actor.AlexaActor;
+
 import java.util.UUID;
 
 public abstract class AlexaRequest {
     private final ObjectMapper mapper;
-    final AlexaTestActor actor;
+    final AlexaActor actor;
     CoreSpeechletRequest speechletRequest;
 
-    AlexaRequest(final AlexaTestActor actor) {
+    AlexaRequest(final AlexaActor actor) {
         this.actor = actor;
         this.mapper = new ObjectMapper();
     }
@@ -19,7 +20,7 @@ public abstract class AlexaRequest {
         return UUID.randomUUID().toString();
     }
 
-    public AlexaTestActor getActor() {
+    public AlexaActor getActor() {
         return this.actor;
     }
 

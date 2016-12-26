@@ -2,14 +2,14 @@ package io.klerch.alexa.tester.request;
 
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.SessionEndedRequest;
-import io.klerch.alexa.tester.client.AlexaTestActor;
+import io.klerch.alexa.tester.actor.AlexaSessionActor;
 
 import java.util.Date;
 
 public class AlexaSessionEndedRequest extends AlexaRequest {
     final SessionEndedRequest.Reason reason;
 
-    public AlexaSessionEndedRequest(final AlexaTestActor actor) {
+    public AlexaSessionEndedRequest(final AlexaSessionActor actor) {
         this(actor, SessionEndedRequest.Reason.USER_INITIATED);
     }
 
@@ -18,7 +18,7 @@ public class AlexaSessionEndedRequest extends AlexaRequest {
         return false;
     }
 
-    public AlexaSessionEndedRequest(final AlexaTestActor actor, final SessionEndedRequest.Reason reason) {
+    public AlexaSessionEndedRequest(final AlexaSessionActor actor, final SessionEndedRequest.Reason reason) {
         super(actor);
         this.reason = reason;
     }

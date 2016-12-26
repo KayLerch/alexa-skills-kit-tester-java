@@ -4,7 +4,7 @@ import com.amazon.speech.slu.Intent;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.IntentRequest;
-import io.klerch.alexa.tester.client.AlexaTestActor;
+import io.klerch.alexa.tester.actor.AlexaSessionActor;
 
 import java.util.*;
 
@@ -12,7 +12,7 @@ public class AlexaIntentRequest extends AlexaRequest {
     private final String intentName;
     private final Map<String, Slot> slots = new HashMap<>();
 
-    public AlexaIntentRequest(final AlexaTestActor actor, final String intentName) {
+    public AlexaIntentRequest(final AlexaSessionActor actor, final String intentName) {
         super(actor);
         this.intentName = intentName;
     }

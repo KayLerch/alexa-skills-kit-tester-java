@@ -16,31 +16,30 @@ public class AlexaUnitTestTest {
     @Test
     public void createInvalid() throws Exception {
         exception.expect(NullPointerException.class);
-        AlexaUnitTest.create("appId", null).build();
+        AlexaUnitClient.create("appId", null).build();
 
         exception.expect(IllegalArgumentException.class);
-        AlexaUnitTest.create("", null).build();
+        AlexaUnitClient.create("", null).build();
 
         exception.expect(IllegalArgumentException.class);
-        AlexaUnitTest.create(null, AssetFactory.getRequestStreamHandler()).build();
+        AlexaUnitClient.create(null, AssetFactory.getRequestStreamHandler()).build();
     }
 
     @Test
     public void createValidMinCustomized() throws Exception {
         final RequestStreamHandler handler = AssetFactory.getRequestStreamHandler();
-        final AlexaUnitTest test1 = AlexaUnitTest.create("appId", handler).build();
+        final AlexaUnitClient test1 = AlexaUnitClient.create("appId", handler).build();
         Assert.assertEquals(test1.getLocale(), Locale.US);
         Assert.assertEquals(test1.getRequestStreamHandler(), handler);
         Assert.assertNotNull(test1.getContext());
-        Assert.assertNotNull(test1.getSession());
-        Assert.assertEquals(test1.getSession().getApplication().getApplicationId(), "appId");
+        Assert.assertEquals(test1.getApplication().getApplicationId(), "appId");
     }
 
     @Test
     public void createValidMaxCustomized() throws Exception {
         final RequestStreamHandler handler = AssetFactory.getRequestStreamHandler();
         final Context context = getContext();
-        final AlexaUnitTest test1 = AlexaUnitTest.create("appId", handler)
+        final AlexaUnitClient test1 = AlexaUnitClient.create("appId", handler)
                 .withLocale(Locale.GERMANY)
                 .withUserId("uid")
                 .withContext(context)
@@ -49,10 +48,9 @@ public class AlexaUnitTestTest {
         Assert.assertEquals(test1.getLocale(), Locale.GERMANY);
         Assert.assertEquals(test1.getRequestStreamHandler(), handler);
         Assert.assertEquals(test1.getContext(), context);
-        Assert.assertNotNull(test1.getSession());
-        Assert.assertEquals(test1.getSession().getApplication().getApplicationId(), "appId");
-        Assert.assertEquals(test1.getSession().getUser().getUserId(), "uid");
-        Assert.assertEquals(test1.getSession().getUser().getAccessToken(), "accessToken");
+        Assert.assertEquals(test1.getApplication().getApplicationId(), "appId");
+        Assert.assertEquals(test1.getUser().getUserId(), "uid");
+        Assert.assertEquals(test1.getUser().getAccessToken(), "accessToken");
     }
 
     @Test
