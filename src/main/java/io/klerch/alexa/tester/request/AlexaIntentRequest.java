@@ -17,6 +17,10 @@ public class AlexaIntentRequest extends AlexaRequest {
         this.intentName = intentName;
     }
 
+    public String getIntentName() {
+        return this.intentName;
+    }
+
     @Override
     public boolean expectsResponse() {
         return true;

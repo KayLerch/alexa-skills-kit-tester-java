@@ -3,6 +3,8 @@ package io.klerch.alexa.tester.client;
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.amazonaws.services.lambda.runtime.*;
 import io.klerch.alexa.tester.AssetFactory;
+import io.klerch.alexa.tester.asset.AlexaAssertion;
+import io.klerch.alexa.tester.asset.AlexaAsset;
 import io.klerch.alexa.tester.request.AlexaIntentRequest;
 import io.klerch.alexa.tester.response.AlexaResponse;
 import org.junit.Assert;
@@ -57,11 +59,45 @@ public class AlexaUnitClientTest {
     }
 
     @Test
-    public void fire() throws Exception {
-        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSessionAttribute("attr", true);
+    public void doConversation() throws Exception {
+        final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithStandardCard();
         final RequestStreamHandler handler = AssetFactory.givenRequestStreamHandlerThatReturns(envelope);
-        final AlexaUnitClient client = AlexaUnitClient.create("appId", handler).build();
-        //final AlexaResponse response = client.fire(AssetFactory.givenRe)
+        final AlexaUnitClient client = AlexaUnitClient
+                .create("appId", handler)
+                .withDebugFlagSessionAttribute("myDebugFlag")
+                .build();
+
+        client.startSession()
+                .launch()
+                    .assertSessionStillOpen()
+                    .assertSessionStateExists("myDebugFlag")
+                    .assertTrue(AlexaAssertion.HasCard)
+                    .assertExecutionTimeLessThan(1000)
+                    .done()
+                .intent("myIntent", "slot1", true)
+                    .assertSessionStillOpen()
+                    .assertSessionStateEquals("slot1", "true")
+                    .assertSessionStateEquals(AssetFactory.SESSION_KEY_WITH_INTENT_NAME, "myIntent")
+                    .assertMatches(AlexaAsset.OutputSpeechSsml, ".*" + AssetFactory.DEFAULT_TEXT +".*")
+                    .done()
+                .intent("myIntent2", "slot2", 123)
+                    .assertSessionStillOpen()
+                    .assertSessionStateEquals("slot1", "true")
+                    .assertSessionStateEquals("slot2", "123")
+                    .assertFalse(AlexaAssertion.HasDirective)
+                    .assertMatches(AlexaAsset.RepromptSpeechSsml, ".*" + AssetFactory.DEFAULT_TEXT +".*")
+                    .done()
+                .intent("myIntent3", "slot2", 321)
+                    .assertSessionStillOpen()
+                    .assertSessionStateEquals("slot2", "321")
+                    .done()
+                .repeat()
+                    .assertThat(e -> e.getVersion().equals(AlexaClient.VERSION))
+                    .assertNotEquals(AlexaAsset.StandardCardLargeImageUrl, AssetFactory.DEFAULT_CARD_SMALL_IMAGE)
+                    .assertEquals(AlexaAsset.StandardCardLargeImageUrl, AssetFactory.DEFAULT_CARD_LARGE_IMAGE)
+                    .assertSessionStateExists("myDebugFlag")
+                    .done()
+                .endSession();
     }
 
     private Context getContext() {

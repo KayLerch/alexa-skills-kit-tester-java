@@ -8,12 +8,15 @@ import com.amazonaws.services.lambda.model.InvokeResult;
 import io.klerch.alexa.tester.request.AlexaRequest;
 import io.klerch.alexa.tester.response.AlexaResponse;
 import org.apache.commons.lang3.Validate;
+import org.apache.log4j.Logger;
 
 import java.util.Optional;
 
 public class AlexaLambdaClient extends AlexaClient {
+    private final static Logger log = Logger.getLogger(AlexaLambdaClient.class);
     private final AWSLambda lambdaClient;
     private final String lambdaFunctionName;
+    private long lastExecutionMillis;
 
     AlexaLambdaClient(final AlexaSystemTestBuilder builder) {
         super(builder);
@@ -34,13 +37,22 @@ public class AlexaLambdaClient extends AlexaClient {
     }
 
     @Override
+    public long getLastExecutionMillis() {
+        return lastExecutionMillis;
+    }
+
+    @Override
     public Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         final InvocationType invocationType = request.expectsResponse() ? InvocationType.RequestResponse : InvocationType.Event;
         final InvokeRequest invokeRequest = new InvokeRequest()
                 .withInvocationType(invocationType)
                 .withFunctionName(lambdaFunctionName)
                 .withPayload(payload);
+        final long startTimestamp = System.currentTimeMillis();
+        log.info(String.format("\t[INFO] Invoke lambda function '%s'.", lambdaFunctionName));
+        log.debug(String.format("\t[INFO] with request payload '%s'.", payload));
         final InvokeResult invokeResult = lambdaClient.invoke(invokeRequest);
+        lastExecutionMillis = System.currentTimeMillis() - startTimestamp;
         return invocationType.equals(InvocationType.RequestResponse) ?
                 Optional.of(new AlexaResponse(request, invokeResult.getPayload().array())) : Optional.empty();
     }

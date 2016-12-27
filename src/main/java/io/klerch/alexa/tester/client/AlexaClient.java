@@ -10,28 +10,36 @@ import io.klerch.alexa.tester.actor.AlexaSessionActor;
 import io.klerch.alexa.tester.request.AlexaRequest;
 import io.klerch.alexa.tester.response.AlexaResponse;
 import org.apache.commons.lang3.Validate;
+import org.apache.log4j.Logger;
 
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
 public abstract class AlexaClient {
-    public final String VERSION = "1.0.0";
+    private final static Logger log = Logger.getLogger(AlexaClient.class);
+    public static final String VERSION = "1.0.0";
     final Locale locale;
     final Application application;
     final User user;
     final ObjectMapper mapper;
+    final Optional<String> debugFlagSessionAttributeName;
 
     AlexaClient(final AlexaTestBuilder builder) {
         this.mapper = new ObjectMapper();
         this.locale = builder.locale;
         this.application = new Application(builder.applicationId);
         this.user = User.builder().withUserId(builder.uid).withAccessToken(builder.accessToken).build();
+        this.debugFlagSessionAttributeName = StringUtils.isNullOrEmpty(builder.debugFlagSessionAttributeName) ? Optional.empty() : Optional.of(builder.debugFlagSessionAttributeName);
     }
 
     public Application getApplication() { return this.application; }
 
     public User getUser() { return this.user; }
+
+    public Optional<String> getDebugFlagSessionAttributeName() {
+        return debugFlagSessionAttributeName;
+    }
 
     public Optional<AlexaResponse> fire(final AlexaRequest request) {
         final SpeechletRequestEnvelope envelope = request.getActor().envelope(request);
@@ -39,7 +47,9 @@ public abstract class AlexaClient {
         try {
             payload = mapper.writeValueAsString(envelope);
         } catch (final JsonProcessingException e) {
-            throw new RuntimeException("Invalid request format.", e);
+            final String msg = String.format("Invalid request format. %s", e.getMessage());
+            log.error(String.format("\t[ERROR] %s", msg));
+            throw new RuntimeException(msg, e);
         }
         // ensure payload set
         Validate.notBlank(payload, "Invalid speechlet request contents. Must not be null or empty.");
@@ -48,6 +58,8 @@ public abstract class AlexaClient {
         response.ifPresent(request.getActor()::exploitResponse);
         return response;
     }
+
+    public abstract long getLastExecutionMillis();
 
     abstract Optional<AlexaResponse> fire(final AlexaRequest request, final String payload);
 
@@ -64,28 +76,39 @@ public abstract class AlexaClient {
         Locale locale;
         String uid;
         String accessToken;
+        String debugFlagSessionAttributeName;
 
         AlexaTestBuilder(final String applicationId) {
             this.applicationId = applicationId;
         }
 
+        @SuppressWarnings("unchecked")
         public G withLocale(final Locale locale) {
             this.locale = locale;
             return (G)this;
         }
 
+        @SuppressWarnings("unchecked")
         public G withLocale(final String languageTag) {
             this.locale = Locale.forLanguageTag(languageTag);
             return (G)this;
         }
 
+        @SuppressWarnings("unchecked")
         public G withUserId(final String uid) {
             this.uid = uid;
             return (G)this;
         }
 
+        @SuppressWarnings("unchecked")
         public G withAccessToken(final String accessToken) {
             this.accessToken = accessToken;
+            return (G)this;
+        }
+
+        @SuppressWarnings("unchecked")
+        public G withDebugFlagSessionAttribute(final String debugFlagSessionAttributeName) {
+            this.debugFlagSessionAttributeName = debugFlagSessionAttributeName;
             return (G)this;
         }
 
