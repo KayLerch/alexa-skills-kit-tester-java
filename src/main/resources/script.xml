@@ -1,0 +1,37 @@
+<test>
+    <configuration>
+        <endpoint>lambda-function-name</endpoint>
+        <locale>de-DE</locale>
+        <user id="dgdfgd" accessToken="gdgdfg" />
+        <application id="gdfgdfg" />
+        <debugFlagSessionAttribute>debug</debugFlagSessionAttribute>
+    </configuration>
+    <sessions>
+        <session>
+            <launch>
+                <response>
+                    <assertTrue assertion="HasCard" />
+                    <assertFalse assertion="SessionEnded" />
+                    <assertEquals asset="OutputSpeechPlain">Hallo</assertEquals>
+                    <assertMatches asset="OutputSpeechSsml">.*Hallo.*</assertMatches>
+                    <assertExists asset="OutputSpeechSsml" />
+                </response>
+            </launch>
+            <intent name="intent1">
+                <request>
+                    <slots>
+                        <slot name="slot1" value="val" />
+                        <slot name="slot2" value="123" />
+                    </slots>
+                </request>
+                <response>
+                    <assertTrue with="HasCard" />
+                    <assertFalse with="SessionEnded" />
+                    <assertEquals with="OutputSpeechPlain">Hallo</assertEquals>
+                    <assertMatches with="OutputSpeechSsml">.*Hallo.*</assertMatches>
+                    <assertExists with="OutputSpeechSsml" />
+                </response>
+            </intent>
+        </session>
+    </sessions>
+</test>

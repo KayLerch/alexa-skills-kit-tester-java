@@ -77,6 +77,11 @@
             <version>1.0.0</version>
         </dependency>
         <dependency>
+            <groupId>org.jooq</groupId>
+            <artifactId>joox</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
