@@ -19,19 +19,14 @@ public class AlexaLambdaClient extends AlexaClient {
     private final String lambdaFunctionName;
     private long lastExecutionMillis;
 
-    AlexaLambdaClient(final AlexaSystemTestBuilder builder) {
+    AlexaLambdaClient(final AlexaLambdaClientBuilder builder) {
         super(builder);
         this.lambdaClient = builder.lambdaClient;
         this.lambdaFunctionName = builder.lambdaFunctionName;
     }
 
-    public static AlexaSystemTestBuilder create(final String applicationId, final String lambdaFunctionName) {
-        return new AlexaSystemTestBuilder(applicationId, lambdaFunctionName);
-    }
-    public static AlexaSystemTestBuilder create(final Match mConfig) {
-        final Match mApplication = mConfig.find("application");
-        Validate.isTrue(mApplication.isNotEmpty(), "Node 'application' not found.");
-        return new AlexaSystemTestBuilder(mApplication.id(), mConfig);
+    public static AlexaLambdaClientBuilder<AlexaLambdaClient, AlexaLambdaClientBuilder> create(final String applicationId, final String lambdaFunctionName) {
+        return new AlexaLambdaClientBuilder<>(applicationId, lambdaFunctionName);
     }
 
     public AWSLambda getLambdaClient() {
@@ -63,58 +58,35 @@ public class AlexaLambdaClient extends AlexaClient {
                 Optional.of(new AlexaResponse(request, invokeResult.getPayload().array())) : Optional.empty();
     }
 
-    public static class AlexaSystemTestBuilder extends AlexaTestBuilder<AlexaLambdaClient, AlexaSystemTestBuilder> {
+    public static class AlexaLambdaClientBuilder<T extends AlexaLambdaClient, G extends AlexaLambdaClientBuilder> extends AlexaClientBuilder<AlexaLambdaClient, G> {
         String lambdaFunctionName;
         AWSLambda lambdaClient;
 
-        AlexaSystemTestBuilder(final String applicationId, final Match mConfig) {
-            super(applicationId);
-
-            final Match mEndpoint = mConfig.find("endpoint");
-            if (mEndpoint.isNotEmpty()) {
-                lambdaFunctionName = mEndpoint.text();
-            }
-
-            final Match mLocale = mConfig.find("locale");
-            if (mLocale.isNotEmpty()) {
-                withLocale(mLocale.text());
-            }
-
-            final Match mDebugFlag = mConfig.find("debugFlagSessionAttribute");
-            if (mDebugFlag.isNotEmpty()) {
-                withDebugFlagSessionAttribute(mDebugFlag.text());
-            }
-
-            final Match mUser = mConfig.find("user");
-            if (mUser.isNotEmpty()) {
-                withUserId(mUser.id());
-                final Match mToken = mConfig.find("accessToken");
-                if (mToken.isNotEmpty()) {
-                    withAccessToken(mToken.text());
-                }
-            }
-        }
-
-        AlexaSystemTestBuilder(final String applicationId, final String lambdaFunctionName) {
+        AlexaLambdaClientBuilder(final String applicationId, final String lambdaFunctionName) {
             super(applicationId);
             this.lambdaFunctionName = lambdaFunctionName;
         }
 
-        public AlexaSystemTestBuilder withLambdaClient(final AWSLambda lambdaClient) {
+        public AlexaLambdaClientBuilder<T, G> withLambdaClient(final AWSLambda lambdaClient) {
             this.lambdaClient = lambdaClient;
             return this;
         }
 
         @Override
-        public AlexaLambdaClient build() {
-            preBuild();
+        void preBuild() {
+            super.preBuild();
             Validate.notBlank(lambdaFunctionName, "Lambda function name must not be empty.");
 
             if (lambdaClient == null) {
                 lambdaClient = new AWSLambdaClient();
             }
+        }
 
-            return new AlexaLambdaClient(this);
+        @Override
+        @SuppressWarnings("unchecked")
+        public T build() {
+            preBuild();
+            return (T)new AlexaLambdaClient(this);
         }
     }
 }

@@ -26,7 +26,7 @@ public abstract class AlexaClient {
     final ObjectMapper mapper;
     final Optional<String> debugFlagSessionAttributeName;
 
-    AlexaClient(final AlexaTestBuilder builder) {
+    AlexaClient(final AlexaClientBuilder builder) {
         this.mapper = new ObjectMapper();
         this.locale = builder.locale;
         this.application = new Application(builder.applicationId);
@@ -80,45 +80,40 @@ public abstract class AlexaClient {
         return locale;
     }
 
-    public static abstract class AlexaTestBuilder<T extends AlexaClient, G extends AlexaTestBuilder> {
+    public static abstract class AlexaClientBuilder<T extends AlexaClient, G extends AlexaClientBuilder> {
         String applicationId;
         Locale locale;
         String uid;
         String accessToken;
         String debugFlagSessionAttributeName;
 
-        AlexaTestBuilder(final String applicationId) {
+        AlexaClientBuilder(final String applicationId) {
             this.applicationId = applicationId;
         }
 
-        @SuppressWarnings("unchecked")
-        public G withLocale(final Locale locale) {
+        public AlexaClientBuilder<T, G> withLocale(final Locale locale) {
             this.locale = locale;
-            return (G)this;
+            return this;
         }
 
-        @SuppressWarnings("unchecked")
-        public G withLocale(final String languageTag) {
+        public AlexaClientBuilder<T, G> withLocale(final String languageTag) {
             this.locale = Locale.forLanguageTag(languageTag);
-            return (G)this;
+            return this;
         }
 
-        @SuppressWarnings("unchecked")
-        public G withUserId(final String uid) {
+        public AlexaClientBuilder<T, G> withUserId(final String uid) {
             this.uid = uid;
-            return (G)this;
+            return this;
         }
 
-        @SuppressWarnings("unchecked")
-        public G withAccessToken(final String accessToken) {
+        public AlexaClientBuilder<T, G> withAccessToken(final String accessToken) {
             this.accessToken = accessToken;
-            return (G)this;
+            return this;
         }
 
-        @SuppressWarnings("unchecked")
-        public G withDebugFlagSessionAttribute(final String debugFlagSessionAttributeName) {
+        public AlexaClientBuilder<T, G> withDebugFlagSessionAttribute(final String debugFlagSessionAttributeName) {
             this.debugFlagSessionAttributeName = debugFlagSessionAttributeName;
-            return (G)this;
+            return this;
         }
 
         void preBuild() {

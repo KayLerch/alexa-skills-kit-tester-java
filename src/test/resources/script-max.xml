@@ -1,0 +1,10 @@
+<test>
+    <configuration>
+        <endpoint>myLambdaFunctionName</endpoint>
+        <locale>de-DE</locale>
+        <application id="myApplicationId" />
+        <user id="myUserId" accessToken="myAccessToken" />
+        <application id="myApplicationId" />
+        <debugFlagSessionAttribute>myDebugFlag</debugFlagSessionAttribute>
+    </configuration>
+</test>

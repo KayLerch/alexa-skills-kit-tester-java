@@ -1,0 +1,7 @@
+<test>
+    <configuration>
+        <endpoint>myLambdaFunctionName</endpoint>
+        <locale>de-DE</locale>
+        <application id="myApplicationId" />
+    </configuration>
+</test>

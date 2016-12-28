@@ -18,14 +18,14 @@ public class AlexaUnitClient extends AlexaClient {
     private final Context context;
     private long lastExecutionMillis = -1;
 
-    AlexaUnitClient(final AlexaUnitTestBuilder builder) {
+    AlexaUnitClient(final AlexaUnitClientBuilder builder) {
         super(builder);
         this.requestStreamHandler = builder.requestStreamHandler;
         this.context = builder.context;
     }
 
-    public static AlexaUnitTestBuilder create(final String applicationId, final RequestStreamHandler requestStreamHandler) {
-        return new AlexaUnitTestBuilder(applicationId, requestStreamHandler);
+    public static AlexaUnitClientBuilder<AlexaUnitClient, AlexaUnitClientBuilder> create(final String applicationId, final RequestStreamHandler requestStreamHandler) {
+        return new AlexaUnitClientBuilder<>(applicationId, requestStreamHandler);
     }
 
     public RequestStreamHandler getRequestStreamHandler() {
@@ -58,22 +58,23 @@ public class AlexaUnitClient extends AlexaClient {
                 Optional.of(new AlexaResponse(request, outputStream.toByteArray())) : Optional.empty();
     }
 
-    public static class AlexaUnitTestBuilder extends AlexaTestBuilder<AlexaUnitClient, AlexaUnitTestBuilder> {
+    public static class AlexaUnitClientBuilder<T extends AlexaUnitClient, G extends AlexaUnitClientBuilder> extends AlexaClientBuilder<AlexaUnitClient, AlexaUnitClientBuilder> {
         RequestStreamHandler requestStreamHandler;
         Context context;
 
-        AlexaUnitTestBuilder(final String applicationId, final RequestStreamHandler requestStreamHandler) {
+        AlexaUnitClientBuilder(final String applicationId, final RequestStreamHandler requestStreamHandler) {
             super(applicationId);
             this.requestStreamHandler = requestStreamHandler;
         }
 
-        public AlexaUnitTestBuilder withContext(final Context context) {
+        public AlexaUnitClientBuilder<T, G> withContext(final Context context) {
             this.context = context;
             return this;
         }
 
         @Override
-        public AlexaUnitClient build() {
+        @SuppressWarnings("unchecked")
+        public T build() {
             preBuild();
             Validate.notNull(requestStreamHandler, "Request stream handler must not be null.");
 
@@ -81,7 +82,7 @@ public class AlexaUnitClient extends AlexaClient {
                 context = getContext();
             }
 
-            return new AlexaUnitClient(this);
+            return (T)new AlexaUnitClient(this);
         }
 
         private Context getContext() {
