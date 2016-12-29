@@ -161,11 +161,11 @@ Lambda function but it loads an XML test-script from a file stream).
 final AWSLambda lambdaClient = new AWSLambdaClient();
 final AlexaClient client = AlexaLambdaClient
     .create("appId", "lambda-function-name")
-    .withLambdaClient(lambdaClient)
-    .withLocale(Locale.GERMANY)
-    .withUserId("uid")
-    .withAccessToken("accessToken")
-    .withDebugFlagSessionAttribute("debug123flag")
+        .withLambdaClient(lambdaClient)
+        .withLocale(Locale.GERMANY)
+        .withUserId("uid")
+        .withAccessToken("accessToken")
+        .withDebugFlagSessionAttribute("debug123flag")
     .build();
 ```
 
@@ -294,10 +294,12 @@ writes logs that are easy to read. Here's an example:
 ```text
 [START] session start request with sessionId 'SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8' ...
 → [INFO] Invoke lambda function 'lambda-function-name'.
+→ [INFO] with request payload '{"version":"1.0","session":{"new":true,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"SessionStartedRequest","requestId":"EdwRequestId.e59f22f6-cd70-4a92-868c-911fe9f94815","timestamp":"2016-12-29T22:30:14Z","locale":"en-US"}}'.
 [DONE] session start request.
 
 [START] launch request ...
 → [INFO] Invoke lambda function 'lambda-function-name'.
+→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"LaunchRequest","requestId":"EdwRequestId.4eb760c0-51cd-4c9b-9421-92455c7d465a","timestamp":"2016-12-29T22:30:15Z","locale":"en-US"}}'.
 [DONE] launch request in 24 ms.
 → [PASSED] SessionStillOpen is TRUE.
 → [PASSED] Session state with key 'myDebugFlag' exists.
@@ -306,6 +308,7 @@ writes logs that are easy to read. Here's an example:
 
 [START] intent request 'myIntent' ...
 → [INFO] Invoke lambda function 'lambda-function-name'.
+→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"launch"},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.05d529cb-c291-4ec8-9970-bc14b2c50603","timestamp":"2016-12-29T22:30:15Z","locale":"en-US","intent":{"name":"myIntent","slots":{"slot1":{"name":"slot1","value":"true"}}}}}'.
 [DONE] intent request 'myIntent' in 15 ms.
 → [PASSED] SessionStillOpen is TRUE.
 → [PASSED] Session state with key 'slot1' is equal to 'true'.
@@ -317,6 +320,7 @@ writes logs that are easy to read. Here's an example:
 
 [START] intent request 'AMAZON.RepeatIntent' ...
 → [INFO] Invoke lambda function 'lambda-function-name'.
+→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"myIntent3","slot1":{"name":"slot1","value":"true"},"slot2":{"name":"slot2","value":"321"}},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.c34dc76c-2ac4-4638-95e2-60d5b88d8c33","timestamp":"2016-12-29T22:30:16Z","locale":"en-US","intent":{"name":"AMAZON.RepeatIntent"}}}'.
 [DONE] intent request 'AMAZON.RepeatIntent' in 3 ms.
 → [PASSED] Custom predicate matches.
 → [PASSED] StandardCardLargeImageUrl is NOT equal to 'https://img/small.jpg'.
@@ -326,5 +330,4 @@ writes logs that are easy to read. Here's an example:
 [START] request session end with reason 'USER_INITIATED'.
 → [INFO] Invoke lambda function 'lambda-function-name'.
 → [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.RepeatIntent","slot1":{"name":"slot1","value":"true"},"slot2":{"name":"slot2","value":"321"}},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"SessionEndedRequest","requestId":"EdwRequestId.a064b024-7f74-4535-8452-7e34d5d9f418","timestamp":"2016-12-29T22:30:16Z","locale":"en-US","reason":"USER_INITIATED","error":null}}'.
-[DONE] request session end with reason 'USER_INITIATED'.
-```
+[DONE] request session end with reason 'USER_INITIATED'.```
