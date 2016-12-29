@@ -4,7 +4,7 @@ in order to simulate a user's conversation.
 
 ## Use cases
 ### Unit & integration testing
-If you built your skill with Java you could use this framework to write unit & integration
+If you built your skill with Java you can use this framework to write unit & integration
 tests. The _AlexaUnitClient_ is leveraged to fire requests at your _RequestStreamHandler_ implementation
  class. The resulting _AlexaResponse_ object provides a lot of methods to validate your skill's response
  with making assertions. The fluent interface not only looks beautiful but is easy to understand
@@ -18,22 +18,22 @@ public void doConversation() throws Exception {
         .create("applicationId", new MyRequestStreamHandler())
         .build();
         
-    client.startSession()
-        .launch()
+    client.startSession() // SessionStartedRequest
+        .launch() // LaunchRequest
             .assertThat(response -> response.getVersion().equals("1.0"))
             .assertTrue(AlexaAssertion.HasCardIsSimple)
             .assertExecutionTimeLessThan(1000)
             .done()
-        .intent("myIntent", "slot1", true)
+        .intent("myIntent", "slot1", true) // IntentRequest with custom intent
             .assertSessionStillOpen()
             .assertSessionStateEquals("slot1", "true")
             .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello.*")
             .done()
         .delay(1000)
-        .repeat()
+        .repeat() // IntentRequest with builtin AMAZON.RepeatIntent
             .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello again.*")
             .done()
-        .endSession();
+        .endSession(); // SessionEndedRequested
     }
 ```
 The above unit tests fires five speechlet requests at your skill and validates
@@ -44,20 +44,16 @@ Tired of coding tests? You can also script your conversation in XML and leverage
 _AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
 
 ```xml
-<test xmlns="http://klerch.io/alexa/skills-kit-tester"
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://klerch.io/alexa/skills-kit-tester testScript.xsd">
+<test>
     <configuration>
         <endpoint>myLambdaFunctionName</endpoint>
         <locale>de-DE</locale>
         <application id="myApplicationId" />
-        <user id="myUserId" accessToken="myAccessToken" />
     </configuration>
     <sessions>
         <session>
             <launch>
                 <assertTrue assertion="HasOutputSpeech" />
-                <assertTrue assertion="HasOutputSpeechIsSsml" />
                 <assertFalse assertion="HasOutputSpeechIsPlainText" />
                 <assertEquals asset="StandardCardTitle" value="card_title" />
             </launch>
@@ -66,14 +62,12 @@ _AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
                 <request>
                     <slots>
                         <slot key="slot1" value="val" />
-                        <slot key="slot2" value="123" />
                     </slots>
                 </request>
                 <assertSessionStateEquals key="slot1" value="val" />
-                <assertSessionStateEquals key="slot2" value="123" />
             </intent>
             <yes>
-                <assertTrue assertion="HasOutputSpeechIsSsml" />
+                <assertMatches asset="OutputSpeechSsml" value=".*test.*" />
             </yes>
         </session>
         <session>
@@ -87,12 +81,26 @@ _AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
 Have a look at a rich example file [here](/src/test/resources/script-max.xml) and use the 
 [schema file](/src/main/resources/testScript.xsd) to script your own conversations.
 
+To execute the XML script you need to do the following:
+
+```java
+public class MyTestLambdaFunction implements RequestStreamHandler {
+    @Override
+    public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
+        final AlexaLambdaScriptClient client = AlexaLambdaScriptClient
+                        .create(URI.create("https://url.to/testscript.xml"))
+                        .build();
+        client.startScript();
+    }
+}
+```
+
 ### Live testing
 When your skill is in production it is even more important to know if everything
 is doing fine. In case your skill runs in a Lambda function you are good to go with this 
 framework to establish an early-warning-system for potential Alexa skill outages. 
 Just think of a second Lambda function running the above code against your
-live skill. What changes from above code is making use of _AlexaLambdaClient_ instead of _AlexaUnitClient_.
+live skill.
 
 ```java
 public class MyTestLambdaFunction implements RequestStreamHandler {
