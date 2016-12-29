@@ -60,8 +60,7 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
                                 actor.intent(request.getAttribute("name"), extractSlots($(request))) :
                                 (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
                         // validate response
-                        final Match mResponse = $(request).find("response");
-                        validateResponse(response, mResponse.isEmpty() ? $(request) : mResponse);
+                        validateResponse(response, $(request));
                     } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
                         final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
                         log.error(msg, e);
@@ -86,6 +85,9 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
             final String assertionName = assertion.getAttribute("assertion");
             final String key = assertion.getAttribute("key");
             final String value = assertion.getAttribute("value");
+
+            // skip request node which is at the same level as all the assertion-tags
+            if ("request".equals(assertionMethod)) return;
 
             Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
             Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(assertionMethod)), "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
@@ -126,9 +128,9 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
     private List<Slot> extractSlots(final Match mRequest) {
         final List<Slot> slots = new ArrayList<>();
         mRequest.find("request").find("slots").find("slot").forEach(mSlot -> {
-            if (mSlot.hasAttribute("name") && mSlot.hasAttribute("value")) {
+            if (mSlot.hasAttribute("key") && mSlot.hasAttribute("value")) {
                 slots.add(Slot.builder()
-                        .withName(mSlot.getAttribute("name"))
+                        .withName(mSlot.getAttribute("key"))
                         .withValue(mSlot.getAttribute("value")).build());
             }
         });

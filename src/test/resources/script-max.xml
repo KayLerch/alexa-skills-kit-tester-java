@@ -1,10 +1,12 @@
-<test>
+<?xml version="1.0"?>
+<test xmlns="http://klerch.io/alexa/skills-kit-tester"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://klerch.io/alexa/skills-kit-tester testScript.xsd">
     <configuration>
         <endpoint>myLambdaFunctionName</endpoint>
         <locale>de-DE</locale>
         <application id="myApplicationId" />
         <user id="myUserId" accessToken="myAccessToken" />
-        <application id="myApplicationId" />
         <debugFlagSessionAttribute>myDebugFlag</debugFlagSessionAttribute>
     </configuration>
     <sessions>
@@ -83,15 +85,13 @@
             <intent name="intent1">
                 <request>
                     <slots>
-                        <slot name="slot1" value="val" />
-                        <slot name="slot2" value="123" />
+                        <slot key="slot1" value="val" />
+                        <slot key="slot2" value="123" />
                     </slots>
                 </request>
-                <response>
-                    <assertSessionStateEquals key="slot1" value="val" />
-                    <assertSessionStateEquals key="slot2" value="123" />
-                    <assertSessionStateEquals key="myDebugFlag" value="true" />
-                </response>
+                <assertSessionStateEquals key="slot1" value="val" />
+                <assertSessionStateEquals key="slot2" value="123" />
+                <assertSessionStateEquals key="myDebugFlag" value="true" />
             </intent>
             <yes>
                 <assertSessionStateEquals key="intent" value="AMAZON.YesIntent" />
@@ -108,10 +108,8 @@
                 <assertSessionStillOpen />
             </repeat>
             <cancel>
-                <response>
-                    <assertSessionStateEquals key="intent" value="AMAZON.CancelIntent" />
-                    <assertSessionStillOpen />
-                </response>
+                <assertSessionStateEquals key="intent" value="AMAZON.CancelIntent" />
+                <assertSessionStillOpen />
             </cancel>
             <stop>
                 <assertSessionStateEquals key="intent" value="AMAZON.StopIntent" />

@@ -1,0 +1,250 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://klerch.io/alexa/skills-kit-tester"
+           xmlns="http://klerch.io/alexa/skills-kit-tester"
+           elementFormDefault="qualified">
+    <xs:element name="test">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="configuration" minOccurs="1" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="endpoint" type="xs:string" minOccurs="1" maxOccurs="1" nillable="false" />
+                            <xs:element name="locale" type="locale" minOccurs="1" maxOccurs="1" nillable="false" />
+                            <xs:element name="application" minOccurs="1" maxOccurs="1" nillable="false">
+                                <xs:complexType>
+                                    <xs:attribute name="id" type="xs:string" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="user" minOccurs="0" maxOccurs="1" nillable="false">
+                                <xs:complexType>
+                                    <xs:attribute name="id" type="xs:string" use="required" />
+                                    <xs:attribute name="accessToken" type="xs:string" />
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="debugFlagSessionAttribute" type="xs:string" minOccurs="0" maxOccurs="1" nillable="false" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessions" minOccurs="0" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="session" type="session" minOccurs="0" maxOccurs="unbounded" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="session">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="intent" type="actionForIntent" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="delay" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="value" type="xs:long" use="required"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="launch" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="yes" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="no" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="repeat" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="cancel" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="stop" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="startOver" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="help" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="next" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="previous" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="pause" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="resume" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="shuffleOn" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="shuffleOff" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="loopOn" type="action" minOccurs="0" maxOccurs="1" />
+            <xs:element name="loopOff" type="action" minOccurs="0" maxOccurs="1" />
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:complexType name="actionForIntent">
+        <xs:sequence>
+            <xs:element name="request" type="sessionRequest" minOccurs="0" maxOccurs="1" />
+            <xs:group ref="assertions" />
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="action">
+        <xs:sequence>
+            <xs:group ref="assertions" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:group name="assertions">
+        <xs:sequence>
+           <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="assertExecutionTimeLessThan">
+                    <xs:complexType>
+                        <xs:attribute name="value" type="xs:long" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertTrue">
+                    <xs:complexType>
+                        <xs:attribute name="assertion" type="assertion" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertFalse">
+                    <xs:complexType>
+                        <xs:attribute name="assertion" type="assertion" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertExists">
+                    <xs:complexType>
+                        <xs:attribute name="asset" type="asset" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertNotExists">
+                    <xs:complexType>
+                        <xs:attribute name="asset" type="asset" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertEquals">
+                    <xs:complexType>
+                        <xs:attribute name="asset" type="asset" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertNotEquals">
+                    <xs:complexType>
+                        <xs:attribute name="asset" type="asset" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertMatches">
+                    <xs:complexType>
+                        <xs:attribute name="asset" type="asset" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionEnded" />
+                <xs:element name="assertSessionStillOpen" />
+                <xs:element name="assertSessionStateExists">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionStateNotNull">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionStateNotBlank">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionStateEquals">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionStateContains">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="assertSessionStateMatches">
+                    <xs:complexType>
+                        <xs:attribute name="key" type="xs:string" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+    </xs:group>
+
+    <xs:complexType name="sessionRequest">
+        <xs:sequence>
+            <xs:element name="slots">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="slot" minOccurs="0" maxOccurs="unbounded">
+                            <xs:complexType>
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:simpleType name="locale">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="en-US"/>
+            <xs:enumeration value="en-GB"/>
+            <xs:enumeration value="de-DE"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="assertion">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="SessionEnded"/>
+            <xs:enumeration value="SessionStillOpen"/>
+            <xs:enumeration value="HasCard"/>
+            <xs:enumeration value="HasCardIsSimple"/>
+            <xs:enumeration value="HasCardIsStandard"/>
+            <xs:enumeration value="HasCardIsLinkAccount"/>
+            <xs:enumeration value="HasRepromptSpeech"/>
+            <xs:enumeration value="HasRepromptSpeechIsSsml"/>
+            <xs:enumeration value="HasRepromptSpeechIsPlainText"/>
+            <xs:enumeration value="HasOutputSpeech"/>
+            <xs:enumeration value="HasOutputSpeechIsSsml"/>
+            <xs:enumeration value="HasOutputSpeechIsPlainText"/>
+            <xs:enumeration value="HasDirective"/>
+            <xs:enumeration value="HasDirectiveIsPlay"/>
+            <xs:enumeration value="HasDirectiveIsPlayWithReplaceAll"/>
+            <xs:enumeration value="HasDirectiveIsPlayWithEnqueue"/>
+            <xs:enumeration value="HasDirectiveIsPlayWithReplaceEnqueued"/>
+            <xs:enumeration value="HasDirectiveIsStop"/>
+            <xs:enumeration value="HasDirectiveIsClearQueue"/>
+            <xs:enumeration value="HasDirectiveIsClearQueueWithClearAll"/>
+            <xs:enumeration value="HasDirectiveIsClearQueueWithClearEnqueued"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="asset">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Card"/>
+            <xs:enumeration value="SimpleCard"/>
+            <xs:enumeration value="SimpleCardTitle"/>
+            <xs:enumeration value="SimpleCardContent"/>
+            <xs:enumeration value="StandardCard"/>
+            <xs:enumeration value="StandardCardTitle"/>
+            <xs:enumeration value="StandardCardText"/>
+            <xs:enumeration value="StandardCardImage"/>
+            <xs:enumeration value="StandardCardSmallImageUrl"/>
+            <xs:enumeration value="StandardCardLargeImageUrl"/>
+            <xs:enumeration value="LinkAccountCard"/>
+            <xs:enumeration value="LinkAccountCardTitle"/>
+            <xs:enumeration value="OutputSpeech"/>
+            <xs:enumeration value="OutputSpeechSsml"/>
+            <xs:enumeration value="OutputSpeechPlainText"/>
+            <xs:enumeration value="RepromptSpeech"/>
+            <xs:enumeration value="RepromptSpeechSsml"/>
+            <xs:enumeration value="RepromptSpeechPlainText"/>
+            <xs:enumeration value="DirectivePlay"/>
+            <xs:enumeration value="DirectivePlayBehavior"/>
+            <xs:enumeration value="DirectivePlayAudioItem"/>
+            <xs:enumeration value="DirectivePlayAudioItemStream"/>
+            <xs:enumeration value="DirectivePlayAudioItemStreamPreviousToken"/>
+            <xs:enumeration value="DirectivePlayAudioItemStreamOffset"/>
+            <xs:enumeration value="DirectivePlayAudioItemStreamToken"/>
+            <xs:enumeration value="DirectivePlayAudioItemStreamUrl"/>
+            <xs:enumeration value="DirectiveClearQueue"/>
+            <xs:enumeration value="DirectiveClearQueueBehavior"/>
+            <xs:enumeration value="DirectiveStop"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
