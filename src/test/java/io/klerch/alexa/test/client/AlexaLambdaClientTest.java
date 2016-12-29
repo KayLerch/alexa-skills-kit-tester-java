@@ -6,6 +6,10 @@ import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
+import io.klerch.alexa.test.actor.AlexaSessionActor;
+import io.klerch.alexa.test.asset.AlexaAssertion;
+import io.klerch.alexa.test.asset.AlexaAsset;
+import io.klerch.alexa.test.response.AlexaResponse;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,21 +28,18 @@ public class AlexaLambdaClientTest extends AlexaClientTest {
     public ExpectedException exception = ExpectedException.none();
 
     AWSLambda givenLambdaMock() {
-        return Mockito.mock(AWSLambdaClient.class, new Answer() {
-            @Override
-            public Object answer(final InvocationOnMock invocationOnMock) throws Throwable {
-                if (invocationOnMock.getMethod().getName().equals("invoke")) {
-                    final InvokeRequest request = invocationOnMock.getArgumentAt(0, InvokeRequest.class);
-                    final ByteBufferBackedInputStream inputStream = new ByteBufferBackedInputStream(request.getPayload());
-                    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    // delegate request to stream handler
-                    givenHandler().handleRequest(inputStream, outputStream, givenContext());
-                    // put result into payload
-                    return request.getInvocationType().equals(InvocationType.RequestResponse.name()) ?
-                            new InvokeResult().withPayload(ByteBuffer.wrap(outputStream.toByteArray())) : new InvokeResult();
-                }
-                return invocationOnMock.callRealMethod();
+        return Mockito.mock(AWSLambdaClient.class, (Answer) invocationOnMock -> {
+            if (invocationOnMock.getMethod().getName().equals("invoke")) {
+                final InvokeRequest request = invocationOnMock.getArgumentAt(0, InvokeRequest.class);
+                final ByteBufferBackedInputStream inputStream = new ByteBufferBackedInputStream(request.getPayload());
+                final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                // delegate request to stream handler
+                givenHandler().handleRequest(inputStream, outputStream, givenContext());
+                // put result into payload
+                return request.getInvocationType().equals(InvocationType.RequestResponse.name()) ?
+                        new InvokeResult().withPayload(ByteBuffer.wrap(outputStream.toByteArray())) : new InvokeResult();
             }
+            return invocationOnMock.callRealMethod();
         });
     }
 
@@ -75,13 +76,15 @@ public class AlexaLambdaClientTest extends AlexaClientTest {
     @Test
     public void createValidMaxCustomized() throws Exception {
         final AWSLambda lambdaClient = new AWSLambdaClient();
-        final AlexaLambdaClient test1 = AlexaLambdaClient.create("appId", "lambda-function-name")
+        final AlexaLambdaClient test1 = AlexaLambdaClient
+                .create("appId", "lambda-function-name")
                 .withLambdaClient(lambdaClient)
                 .withLocale(Locale.GERMANY)
                 .withUserId("uid")
                 .withAccessToken("accessToken")
                 .withDebugFlagSessionAttribute("debug123flag")
                 .build();
+
         Assert.assertEquals(test1.getLocale(), Locale.GERMANY);
         Assert.assertEquals(test1.getLambdaClient(), lambdaClient);
         Assert.assertEquals(test1.getLambdaFunctionName(), "lambda-function-name");
