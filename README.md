@@ -1,9 +1,9 @@
+[![Join the chat at https://gitter.im/alexa-skills-kit-tester-java/Lobby](https://badges.gitter.im/alexa-skills-kit-tester-java/Lobby.svg)](https://gitter.im/alexa-skills-kit-tester-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![SonarQube Coverage](https://img.shields.io/badge/code%20coverage-87%25-green.svg)
 
 
 # Alexa Skills Kit Testing Framework
 
-[![Join the chat at https://gitter.im/alexa-skills-kit-tester-java/Lobby](https://badges.gitter.im/alexa-skills-kit-tester-java/Lobby.svg)](https://gitter.im/alexa-skills-kit-tester-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 This framework lets you script and execute complex interactions with your Alexa skill 
 in order to simulate a user's conversation. 
 
