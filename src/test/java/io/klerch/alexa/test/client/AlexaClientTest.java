@@ -8,6 +8,8 @@ import io.klerch.alexa.test.asset.AlexaAsset;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Locale;
+
 public abstract class AlexaClientTest {
     public abstract AlexaClient givenClient() throws Exception;
 
