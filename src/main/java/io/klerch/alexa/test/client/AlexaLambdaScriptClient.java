@@ -44,23 +44,29 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
 
             $(session).children().forEach(request -> {
                 final String requestName = request.getLocalName();
+                // in case request is a delay, must provide a value as attribute
+                Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
                 // in case request is a custom intent, must provide a name as attribute
                 Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
                 // request must match method in actor
                 Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
 
-                try {
-                    // request the skill with intent
-                    final AlexaResponse response = "intent".equals(requestName) ?
-                            actor.intent(request.getAttribute("name"), extractSlots($(request))) :
-                            (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
-                    // validate response
-                    final Match mResponse = $(request).find("response");
-                    validateResponse(response, mResponse.isEmpty() ? $(request) : mResponse);
-                } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                    final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
-                    log.error(msg, e);
-                    throw new RuntimeException(msg, e);
+                if ("delay".equals(requestName)) {
+                    actor.delay(Long.parseLong(request.getAttribute("value")));
+                } else {
+                    try {
+                        // request the skill with intent
+                        final AlexaResponse response = "intent".equals(requestName) ?
+                                actor.intent(request.getAttribute("name"), extractSlots($(request))) :
+                                (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
+                        // validate response
+                        final Match mResponse = $(request).find("response");
+                        validateResponse(response, mResponse.isEmpty() ? $(request) : mResponse);
+                    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                        final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
+                        log.error(msg, e);
+                        throw new RuntimeException(msg, e);
+                    }
                 }
             });
 

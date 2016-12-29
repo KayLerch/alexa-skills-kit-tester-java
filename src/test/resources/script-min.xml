@@ -4,4 +4,7 @@
         <locale>de-DE</locale>
         <application id="myApplicationId" />
     </configuration>
+    <sessions>
+        <session />
+    </sessions>
 </test>

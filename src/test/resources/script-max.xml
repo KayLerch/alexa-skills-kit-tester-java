@@ -71,6 +71,7 @@
                 <assertExecutionTimeLessThan value="1000" />
                 <assertSessionStillOpen />
             </launch>
+            <delay value="1000" />
             <intent name="intent0">
                 <assertTrue assertion="HasCard" />
                 <assertFalse assertion="SessionEnded" />
