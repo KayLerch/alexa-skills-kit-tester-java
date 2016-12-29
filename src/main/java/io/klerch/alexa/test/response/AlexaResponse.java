@@ -89,7 +89,7 @@ public class AlexaResponse {
     }
 
     public AlexaResponse assertEquals(final AlexaAsset asset, final Object value){
-        final String assertionText = String.format("'%1$s' is equal to '%2$s'.", asset.name(), value);
+        final String assertionText = String.format("%1$s is equal to '%2$s'.", asset.name(), value);
         return validate(equals(asset, value), assertionText);
     }
 
@@ -98,7 +98,7 @@ public class AlexaResponse {
     }
 
     public AlexaResponse assertNotEquals(final AlexaAsset asset, final Object value){
-        final String assertionText = String.format("'%1$s' is NOT equal to '%2$s'.", asset.name(), value);
+        final String assertionText = String.format("%1$s is NOT equal to '%2$s'.", asset.name(), value);
         return validate(notEquals(asset, value), assertionText);
     }
 
@@ -107,7 +107,7 @@ public class AlexaResponse {
     }
 
     public AlexaResponse assertMatches(final AlexaAsset asset, final String pattern){
-        final String assertionText = String.format("'%1$s' matches pattern '%2$s'.", asset.name(), pattern);
+        final String assertionText = String.format("%1$s matches pattern '%2$s'.", asset.name(), pattern);
         return validate(matches(asset, pattern), assertionText);
     }
 

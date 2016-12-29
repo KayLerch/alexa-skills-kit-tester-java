@@ -1,6 +1,9 @@
 package io.klerch.alexa.test.client;
 
+import com.amazon.speech.slu.Slot;
 import io.klerch.alexa.test.actor.AlexaSessionActor;
+import io.klerch.alexa.test.asset.AlexaAssertion;
+import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
@@ -12,8 +15,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.URI;
 import java.net.URL;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.joox.JOOX.$;
 
@@ -36,10 +43,22 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
             final AlexaSessionActor actor = this.startSession();
 
             $(session).children().forEach(request -> {
+                final String requestName = request.getLocalName();
+                // in case request is a custom intent, must provide a name as attribute
+                Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
+                // request must match method in actor
+                Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
+
                 try {
-                    final AlexaResponse response = (AlexaResponse)AlexaSessionActor.class.getMethod(request.getTagName()).invoke(actor);
+                    // request the skill with intent
+                    final AlexaResponse response = "intent".equals(requestName) ?
+                            actor.intent(request.getAttribute("name"), extractSlots($(request))) :
+                            (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
+                    // validate response
+                    final Match mResponse = $(request).find("response");
+                    validateResponse(response, mResponse.isEmpty() ? $(request) : mResponse);
                 } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                    final String msg = String.format("The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
+                    final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
                     log.error(msg, e);
                     throw new RuntimeException(msg, e);
                 }
@@ -47,6 +66,67 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
 
             actor.endSession();
         });
+    }
+
+    private void validateResponse(final AlexaResponse response, final Match mResponse) {
+        if (mResponse.isEmpty()) {
+            log.info("[INFO] No assertions defined in your script-file to validate skill's response.");
+            return;
+        }
+
+        mResponse.children().forEach(assertion -> {
+            final String assertionMethod = assertion.getTagName();
+            final String assetName = assertion.getAttribute("asset");
+            final String assertionName = assertion.getAttribute("assertion");
+            final String key = assertion.getAttribute("key");
+            final String value = assertion.getAttribute("value");
+
+            Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+            Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(assertionMethod)), "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+
+            Arrays.stream(response.getClass().getMethods())
+                    .filter(m -> m.getName().equals(assertionMethod))
+                    .findFirst()
+                    .ifPresent(m -> {
+                        final List<Object> parameters = new ArrayList<>();
+                        if (m.getName().matches("assertSessionState.*")) {
+                            if (m.getParameterCount() > 0) {
+                                parameters.add(key);
+                            }
+                            if (m.getParameterCount() > 1) {
+                                parameters.add(value);
+                            }
+                        } else {
+                            Arrays.stream(m.getParameterTypes()).forEach(pc -> {
+                                // assign value to parameter based on its type
+                                parameters.add(AlexaAsset.class.equals(pc) ?
+                                        Enum.valueOf(AlexaAsset.class, assetName) :
+                                        AlexaAssertion.class.equals(pc) ?
+                                                Enum.valueOf(AlexaAssertion.class, assertionName) :
+                                                long.class.equals(pc) ?
+                                                        Long.parseLong(value) :
+                                                        pc.cast(value));
+                            });
+                        }
+                        try {
+                            m.invoke(response, parameters.toArray());
+                        } catch (final InvocationTargetException | IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+        });
+    }
+
+    private List<Slot> extractSlots(final Match mRequest) {
+        final List<Slot> slots = new ArrayList<>();
+        mRequest.find("request").find("slots").find("slot").forEach(mSlot -> {
+            if (mSlot.hasAttribute("name") && mSlot.hasAttribute("value")) {
+                slots.add(Slot.builder()
+                        .withName(mSlot.getAttribute("name"))
+                        .withValue(mSlot.getAttribute("value")).build());
+            }
+        });
+        return slots;
     }
 
     public static AlexaLambdaScriptClientBuilder create(final URI uri) throws IOException, SAXException {
