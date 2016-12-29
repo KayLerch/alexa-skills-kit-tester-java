@@ -1,3 +1,6 @@
+![SonarQube Coverage](https://img.shields.io/badge/code%20coverage-87%25-green.svg)
+
+
 # Alexa Skills Kit Testing Framework
 This framework lets you script and execute complex interactions with your Alexa skill 
 in order to simulate a user's conversation. 
