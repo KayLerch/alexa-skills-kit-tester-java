@@ -148,7 +148,7 @@ This is how a test failure reaches you or your IT staff.
 
 There you got your early-warning-system for Alexa skill outages.
 
-## Dive deep
+## Advanced introduction
 
 ### AlexaClient 
 
