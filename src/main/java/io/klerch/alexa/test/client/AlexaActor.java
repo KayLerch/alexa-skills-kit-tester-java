@@ -1,4 +1,4 @@
-package io.klerch.alexa.test.actor;
+package io.klerch.alexa.test.client;
 
 import com.amazon.speech.json.SpeechletRequestEnvelope;
 import io.klerch.alexa.test.client.AlexaClient;

@@ -8,7 +8,7 @@
             <xs:sequence>
                 <xs:element name="configuration" minOccurs="1" maxOccurs="1">
                     <xs:complexType>
-                        <xs:sequence>
+                        <xs:all>
                             <xs:element name="endpoint" type="xs:string" minOccurs="1" maxOccurs="1" nillable="false" />
                             <xs:element name="locale" type="locale" minOccurs="1" maxOccurs="1" nillable="false" />
                             <xs:element name="application" minOccurs="1" maxOccurs="1" nillable="false">
@@ -23,7 +23,8 @@
                                 </xs:complexType>
                             </xs:element>
                             <xs:element name="debugFlagSessionAttribute" type="xs:string" minOccurs="0" maxOccurs="1" nillable="false" />
-                        </xs:sequence>
+                            <xs:element name="timestamp" type="xs:dateTime" minOccurs="0" maxOccurs="1" nillable="false" />
+                        </xs:all>
                     </xs:complexType>
                 </xs:element>
                 <xs:element name="sessions" minOccurs="0" maxOccurs="1">

@@ -2,7 +2,7 @@ package io.klerch.alexa.test.response;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
+import io.klerch.alexa.test.client.AlexaSessionActor;
 import io.klerch.alexa.test.asset.AlexaAssertion;
 import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.request.AlexaRequest;

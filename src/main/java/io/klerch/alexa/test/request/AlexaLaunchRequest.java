@@ -1,8 +1,8 @@
 package io.klerch.alexa.test.request;
 
-import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.LaunchRequest;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
+import com.amazon.speech.speechlet.SpeechletRequest;
+import io.klerch.alexa.test.client.AlexaSessionActor;
 
 import java.util.*;
 
@@ -17,11 +17,11 @@ public class AlexaLaunchRequest extends AlexaRequest {
     }
 
     @Override
-    public CoreSpeechletRequest getSpeechletRequest() {
+    public SpeechletRequest getSpeechletRequest() {
         return LaunchRequest.builder()
                 .withLocale(actor.getClient().getLocale())
                 .withRequestId(generateRequestId())
-                .withTimestamp(new Date())
+                .withTimestamp(actor.getClient().getCurrentTimestamp())
                 .build();
     }
 }

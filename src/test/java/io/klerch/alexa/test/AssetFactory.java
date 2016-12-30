@@ -14,7 +14,7 @@ import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirectiv
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.*;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
+import io.klerch.alexa.test.client.AlexaSessionActor;
 import io.klerch.alexa.test.client.AlexaClient;
 import io.klerch.alexa.test.client.AlexaUnitClient;
 

@@ -1,7 +1,6 @@
 package io.klerch.alexa.test.client;
 
 import com.amazon.speech.slu.Slot;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
 import io.klerch.alexa.test.asset.AlexaAssertion;
 import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.response.AlexaResponse;
@@ -15,12 +14,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.net.URI;
 import java.net.URL;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.joox.JOOX.$;
 
@@ -189,6 +187,11 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
             final Match mDebugFlag = mConfig.find("debugFlagSessionAttribute");
             if (mDebugFlag.isNotEmpty()) {
                 withDebugFlagSessionAttribute(mDebugFlag.text());
+            }
+
+            final Match mTimestamp = mConfig.find("timestamp");
+            if (mTimestamp.isNotEmpty()) {
+                withTimestamp(new Date(mTimestamp.text(Timestamp.class).getTime()));
             }
 
             final Match mUser = mConfig.find("user");

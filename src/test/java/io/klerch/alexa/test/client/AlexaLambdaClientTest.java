@@ -6,20 +6,18 @@ import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
-import io.klerch.alexa.test.asset.AlexaAssertion;
-import io.klerch.alexa.test.asset.AlexaAsset;
-import io.klerch.alexa.test.response.AlexaResponse;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -75,12 +73,14 @@ public class AlexaLambdaClientTest extends AlexaClientTest {
 
     @Test
     public void createValidMaxCustomized() throws Exception {
+        final Date timestamp = DateUtils.addDays(new Date(), 5);
         final AWSLambda lambdaClient = new AWSLambdaClient();
         final AlexaLambdaClient test1 = AlexaLambdaClient
                 .create("appId", "lambda-function-name")
                 .withLambdaClient(lambdaClient)
                 .withLocale(Locale.GERMANY)
                 .withUserId("uid")
+                .withTimestamp(timestamp)
                 .withAccessToken("accessToken")
                 .withDebugFlagSessionAttribute("debug123flag")
                 .build();

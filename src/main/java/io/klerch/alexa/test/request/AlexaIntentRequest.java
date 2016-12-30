@@ -4,7 +4,7 @@ import com.amazon.speech.slu.Intent;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.IntentRequest;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
+import io.klerch.alexa.test.client.AlexaSessionActor;
 
 import java.util.*;
 
@@ -54,7 +54,7 @@ public class AlexaIntentRequest extends AlexaRequest {
                 .withLocale(actor.getClient().getLocale())
                 .withRequestId(generateRequestId())
                 .withIntent(intent)
-                .withTimestamp(new Date())
+                .withTimestamp(actor.getClient().getCurrentTimestamp())
                 .build();
     }
 }

@@ -1,7 +1,8 @@
-package io.klerch.alexa.test.actor;
+package io.klerch.alexa.test.client.actor;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import io.klerch.alexa.test.AssetFactory;
+import io.klerch.alexa.test.client.AlexaSessionActor;
 import io.klerch.alexa.test.client.AlexaUnitClient;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.junit.Assert;

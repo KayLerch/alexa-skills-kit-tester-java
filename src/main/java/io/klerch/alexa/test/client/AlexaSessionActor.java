@@ -1,10 +1,9 @@
-package io.klerch.alexa.test.actor;
+package io.klerch.alexa.test.client;
 
 import com.amazon.speech.json.SpeechletRequestEnvelope;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
-import io.klerch.alexa.test.client.AlexaClient;
 import io.klerch.alexa.test.request.*;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.apache.commons.lang3.Validate;

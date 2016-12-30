@@ -6,13 +6,14 @@ import com.amazon.speech.speechlet.User;
 import com.amazonaws.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.klerch.alexa.test.actor.AlexaSessionActor;
 import io.klerch.alexa.test.request.AlexaRequest;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.log4j.Logger;
 
+import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public abstract class AlexaClient {
     private final static Logger log = Logger.getLogger(AlexaClient.class);
     public static final String VERSION = "1.0";
+    final long millisFromCurrentDate;
     final Locale locale;
     final Application application;
     final User user;
@@ -27,6 +29,7 @@ public abstract class AlexaClient {
     final Optional<String> debugFlagSessionAttributeName;
 
     AlexaClient(final AlexaClientBuilder builder) {
+        this.millisFromCurrentDate = builder.timestamp.getTime() - new Date().getTime();
         this.mapper = new ObjectMapper();
         this.locale = builder.locale;
         this.application = new Application(builder.applicationId);
@@ -42,6 +45,10 @@ public abstract class AlexaClient {
         return String.format("amzn1.ask.skill.%s", UUID.randomUUID());
     }
 
+    public Date getCurrentTimestamp() {
+        return new Date(new Date().getTime() + millisFromCurrentDate);
+    }
+
     public Application getApplication() { return this.application; }
 
     public User getUser() { return this.user; }
@@ -50,7 +57,7 @@ public abstract class AlexaClient {
         return debugFlagSessionAttributeName;
     }
 
-    public Optional<AlexaResponse> fire(final AlexaRequest request) {
+    Optional<AlexaResponse> fire(final AlexaRequest request) {
         final SpeechletRequestEnvelope envelope = request.getActor().envelope(request);
         String payload = null;
         try {
@@ -86,6 +93,7 @@ public abstract class AlexaClient {
         String uid;
         String accessToken;
         String debugFlagSessionAttributeName;
+        Date timestamp;
 
         AlexaClientBuilder(final String applicationId) {
             this.applicationId = applicationId;
@@ -111,6 +119,11 @@ public abstract class AlexaClient {
             return this;
         }
 
+        public AlexaClientBuilder<T, G> withTimestamp(final Date timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
         public AlexaClientBuilder<T, G> withDebugFlagSessionAttribute(final String debugFlagSessionAttributeName) {
             this.debugFlagSessionAttributeName = debugFlagSessionAttributeName;
             return this;
@@ -124,6 +137,9 @@ public abstract class AlexaClient {
             }
             if (StringUtils.isNullOrEmpty(uid)) {
                 uid = generateUserId();
+            }
+            if (timestamp == null) {
+                timestamp = new Date();
             }
         }
 

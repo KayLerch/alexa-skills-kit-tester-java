@@ -2,6 +2,7 @@ package io.klerch.alexa.test.client;
 
 import com.amazonaws.services.lambda.AWSLambda;
 import com.amazonaws.services.lambda.AWSLambdaClient;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,8 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 public class AlexaLambdaScriptClientTest extends AlexaLambdaClientTest {
     @Test
@@ -72,5 +72,7 @@ public class AlexaLambdaScriptClientTest extends AlexaLambdaClientTest {
         Assert.assertEquals(test1.getApplication().getApplicationId(), "myApplicationId");
         Assert.assertEquals(test1.getUser().getUserId(), "myUserId");
         Assert.assertEquals(test1.getUser().getAccessToken(), "myAccessToken");
+        Assert.assertTrue(test1.getCurrentTimestamp().after(new GregorianCalendar(2010, 8, 29).getTime()));
+        Assert.assertTrue(test1.getCurrentTimestamp().before(new GregorianCalendar(2010, 9, 1).getTime()));
     }
 }
