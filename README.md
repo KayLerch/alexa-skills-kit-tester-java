@@ -170,6 +170,7 @@ final AlexaClient client = AlexaLambdaClient
         .withLocale(Locale.GERMANY)
         .withUserId("uid")
         .withAccessToken("accessToken")
+        .withTimestamp(DateUtils.addDays(new Date(), 5))
         .withDebugFlagSessionAttribute("debug123flag")
     .build();
 ```
@@ -183,7 +184,9 @@ custom credentials or region settings of your choice. You can even mock that cli
 Finally the client takes configuration values which go into Alexa speechlet requests (UserId, AccessToken, Locale). If you don't
 set these values locale defaults to en-US, userId is generated and accessToken left empty. The _DebugFlagSessionAttribute_
 optionally defines the name for a session attribute that goes into every request so skills are able to distinguish between
-a test invocation and a user call.
+a test invocation and a user call. If you wonder why it's useful to manipulate the timestamp, think of a skill
+whose behavior depends on the day of a week or the time of a day. You could run your test scripts while letting
+your skill think it's Monday morning - e.g. for asking the user how the weekend was. 
 
 ### AlexaSessionActor
 

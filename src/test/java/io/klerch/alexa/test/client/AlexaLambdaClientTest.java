@@ -92,5 +92,6 @@ public class AlexaLambdaClientTest extends AlexaClientTest {
         Assert.assertEquals(test1.getApplication().getApplicationId(), "appId");
         Assert.assertEquals(test1.getUser().getUserId(), "uid");
         Assert.assertEquals(test1.getUser().getAccessToken(), "accessToken");
+        Assert.assertTrue(DateUtils.isSameDay(timestamp, test1.getCurrentTimestamp()));
     }
 }

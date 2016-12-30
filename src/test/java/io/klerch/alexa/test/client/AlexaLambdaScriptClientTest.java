@@ -72,7 +72,6 @@ public class AlexaLambdaScriptClientTest extends AlexaLambdaClientTest {
         Assert.assertEquals(test1.getApplication().getApplicationId(), "myApplicationId");
         Assert.assertEquals(test1.getUser().getUserId(), "myUserId");
         Assert.assertEquals(test1.getUser().getAccessToken(), "myAccessToken");
-        Assert.assertTrue(test1.getCurrentTimestamp().after(new GregorianCalendar(2010, 8, 29).getTime()));
-        Assert.assertTrue(test1.getCurrentTimestamp().before(new GregorianCalendar(2010, 9, 1).getTime()));
+        Assert.assertTrue(DateUtils.isSameDay(test1.getCurrentTimestamp(), new GregorianCalendar(2010, 8, 30).getTime()));
     }
 }
