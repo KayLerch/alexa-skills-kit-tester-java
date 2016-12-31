@@ -1,5 +1,5 @@
 [![Join the chat at https://gitter.im/alexa-skills-kit-tester-java/Lobby](https://badges.gitter.im/alexa-skills-kit-tester-java/Lobby.svg)](https://gitter.im/alexa-skills-kit-tester-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![SonarQube Coverage](https://img.shields.io/badge/code%20coverage-87%25-green.svg)
+![SonarQube Coverage](https://img.shields.io/badge/code%20coverage-88%25-green.svg)
 
 
 # Alexa Skills Kit Testing Framework
@@ -42,10 +42,13 @@ public void doConversation() throws Exception {
     }
 ```
 The above unit tests fires five speechlet requests at your skill and validates
-their outputs. 
+their outputs. Assert methods throw runtime exceptions to indicate an invalid response.
+In order to avoid those exceptions on validation each assert-method has an equivalent
+  condition-method that returns a Boolean. You will love them if you want to script alternative
+  conversation paths on certain skill response contents.
 
 ##### Design a skill conversation in XML
-Tired of coding tests? You can also script your conversation in XML and leverage
+Tired of coding tests? Even cooler, you can also script your conversation in XML and leverage
 _AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
 
 ```xml
@@ -84,7 +87,50 @@ _AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
 </test>
 ```
 Have a look at a rich example file [here](/src/test/resources/script-max.xml) and use the 
-[schema file](/src/main/resources/testScript.xsd) to script your own conversations.
+[schema file](/src/main/resources/testScript.xsd) to create your own test-script.
+
+You can also use conditions in those scripts (there's one equivalent for each assert-tag). 
+This is how you add alternative conversation-paths in case of custom criteria. Feel free to 
+nest as deep as you want.
+```xml
+<test>
+    <configuration>
+        <!-- ... -->
+    </configuration>
+    <sessions>
+        <session>
+            <launch>
+                <assertSessionStateEquals key="myDebugFlag" value="true" />
+                <isTrue assertion="HasCard">
+                    <yes>
+                        <assertExists asset="Card" />
+                        <matches asset="OutputSpeechSsml" value=".*test.*">
+                            <yes>
+                                <assertSessionStillOpen />
+                                <isTrue assertion="HasDirective">
+                                    <help>
+                                        <assertExists asset="DirectiveClearQueue"/>
+                                    </help>
+                                </isTrue>
+                            </yes>
+                            <cancel>
+                                <assertSessionStillOpen />
+                            </cancel>
+                        </matches>
+                    </yes>
+                </isTrue>
+                <isFalse assertion="HasCard">
+                    <no>
+                        <assertNotExists asset="DirectiveClearQueue" />
+                    </no>
+                    <delay value="1000"/>
+                </isFalse>
+            </launch>
+        </session>
+    </sessions>
+</test>
+```
+Have a look at another example file [here](/src/test/resources/script-deep.xml).
 
 To execute the XML script you need to do the following:
 

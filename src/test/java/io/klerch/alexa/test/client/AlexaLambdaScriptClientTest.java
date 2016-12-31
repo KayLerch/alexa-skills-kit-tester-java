@@ -13,18 +13,27 @@ import java.net.URL;
 import java.util.*;
 
 public class AlexaLambdaScriptClientTest extends AlexaLambdaClientTest {
-    @Test
-    public void startScript() throws Exception {
-        givenClient().startScript();
-    }
-
     @Override
     public AlexaLambdaScriptClient givenClient() throws Exception {
-        final InputStream stream = getClass().getClassLoader().getResourceAsStream("script-deep.xml");
+        return givenClient("script-max.xml");
+    }
+
+    private AlexaLambdaScriptClient givenClient(final String script) throws Exception {
+        final InputStream stream = getClass().getClassLoader().getResourceAsStream(script);
         return AlexaLambdaScriptClient
                 .create(stream)
                 .withLambdaClient(givenLambdaMock())
                 .build();
+    }
+
+    @Test
+    public void startMaxScript() throws Exception {
+        givenClient("script-max.xml").startScript();
+    }
+
+    @Test
+    public void startDeepScript() throws Exception {
+        givenClient("script-deep.xml").startScript();
     }
 
     @Test

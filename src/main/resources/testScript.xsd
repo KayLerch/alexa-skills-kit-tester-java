@@ -69,6 +69,7 @@
         <xs:sequence>
             <xs:element name="request" type="sessionRequest" minOccurs="0" maxOccurs="1" />
             <xs:group ref="assertions" />
+            <xs:group ref="conditionals" />
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
     </xs:complexType>

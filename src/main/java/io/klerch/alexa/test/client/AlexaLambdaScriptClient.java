@@ -4,6 +4,7 @@ import com.amazon.speech.slu.Slot;
 import io.klerch.alexa.test.asset.AlexaAssertion;
 import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.response.AlexaResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
 import org.joox.Match;
@@ -99,7 +100,7 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
                     .findFirst()
                     .ifPresent(m -> {
                         final List<Object> parameters = new ArrayList<>();
-                        if (m.getName().matches("assertSessionState.*")) {
+                        if (StringUtils.containsIgnoreCase(m.getName(), "SessionState")) {
                             if (m.getParameterCount() > 0) {
                                 parameters.add(key);
                             }
