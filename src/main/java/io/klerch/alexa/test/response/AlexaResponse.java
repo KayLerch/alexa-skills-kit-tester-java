@@ -60,7 +60,7 @@ public class AlexaResponse {
         final String assertionText = String.format("Execution is not longer than %s ms.", millis);
         final long executionMillis = request.getActor().getClient().getLastExecutionMillis();
         Validate.inclusiveBetween(0L, millis, executionMillis, "[FAILED] Assertion '%1Ss' is FALSE. Was %2Ss ms.", assertionText, executionMillis);
-        log.debug(String.format("->[PASSED] %s", assertionText));
+        log.debug(String.format("->[TRUE] %s", assertionText));
         return this;
     }
 

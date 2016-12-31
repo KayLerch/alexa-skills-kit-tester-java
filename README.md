@@ -346,42 +346,105 @@ To dig into test results and investigate potential errors this test framework
 writes logs that are easy to read. Here's an example:
 
 ```text
-[START] session start request with sessionId 'SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8' ...
-→ [INFO] Invoke lambda function 'lambda-function-name'.
-→ [INFO] with request payload '{"version":"1.0","session":{"new":true,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"SessionStartedRequest","requestId":"EdwRequestId.e59f22f6-cd70-4a92-868c-911fe9f94815","timestamp":"2016-12-29T22:30:14Z","locale":"en-US"}}'.
+[START] session start request with sessionId 'SessionId.567f262e-de60-4432-90bf-dcd78992db86' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":true,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"SessionStartedRequest","requestId":"EdwRequestId.46eef984-b04a-477f-8dad-18c289bb441a","timestamp":"2010-09-30T11:11:11Z","locale":"de-DE"}}'.
 [DONE] session start request.
 
 [START] launch request ...
-→ [INFO] Invoke lambda function 'lambda-function-name'.
-→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"LaunchRequest","requestId":"EdwRequestId.4eb760c0-51cd-4c9b-9421-92455c7d465a","timestamp":"2016-12-29T22:30:15Z","locale":"en-US"}}'.
-[DONE] launch request in 24 ms.
-→ [PASSED] SessionStillOpen is TRUE.
-→ [PASSED] Session state with key 'myDebugFlag' exists.
-→ [PASSED] HasCard is TRUE.
-→ [PASSED] Execution is not longer than 1000 ms.
-
-[START] intent request 'myIntent' ...
-→ [INFO] Invoke lambda function 'lambda-function-name'.
-→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"launch"},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.05d529cb-c291-4ec8-9970-bc14b2c50603","timestamp":"2016-12-29T22:30:15Z","locale":"en-US","intent":{"name":"myIntent","slots":{"slot1":{"name":"slot1","value":"true"}}}}}'.
-[DONE] intent request 'myIntent' in 15 ms.
-→ [PASSED] SessionStillOpen is TRUE.
-→ [PASSED] Session state with key 'slot1' is equal to 'true'.
-→ [PASSED] Session state with key 'intent' is equal to 'myIntent'.
-→ [PASSED] OutputSpeechSsml matches pattern '.*test.*'.
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"LaunchRequest","requestId":"EdwRequestId.01cab886-b323-4371-9d09-94b2f3979bc7","timestamp":"2010-09-30T11:11:11Z","locale":"de-DE"}}'.
+[DONE] launch request in 10 ms.
+->[TRUE] SessionEnded is NOT true.
+->[TRUE] HasCard is TRUE.
 
 [START] wait for 1000 ms.
 [DONE] wait for 1000 ms.
 
+[START] intent request 'intent0' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"launch"},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.44e3c514-1b63-4c1d-8b66-31ceed01439a","timestamp":"2010-09-30T11:11:12Z","locale":"de-DE","intent":{"name":"intent0"}}}'.
+[DONE] intent request 'intent0' in 22 ms.
+->[TRUE] HasCard is TRUE.
+->[TRUE] SessionEnded is NOT true.
+->[TRUE] OutputSpeechPlainText does NOT exist.
+->[TRUE] OutputSpeechPlainText is NOT equal to 'test'.
+->[TRUE] OutputSpeechSsml matches pattern '.*test.*'.
+->[TRUE] OutputSpeechSsml exists.
+
+[START] intent request 'intent1' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"intent0"},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.5da93dd1-b3f7-4e6c-a2a6-b4d595792002","timestamp":"2010-09-30T11:11:12Z","locale":"de-DE","intent":{"name":"intent1","slots":{"slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}}}}}'.
+[DONE] intent request 'intent1' in 3 ms.
+->[TRUE] Session state with key 'slot1' is NOT null.
+->[TRUE] Session state with key 'slot1' is equal to 'val'.
+->[TRUE] Session state with key 'slot2' is NOT null.
+->[TRUE] Session state with key 'slot2' is equal to '123'.
+->[TRUE] Session state with key 'myDebugFlag' is NOT null.
+->[TRUE] Session state with key 'myDebugFlag' is equal to 'true'.
+
+[START] intent request 'AMAZON.YesIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"intent1","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.7c647d76-54ed-418e-a9d9-81284584b7b8","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.YesIntent"}}}'.
+[DONE] intent request 'AMAZON.YesIntent' in 5 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.YesIntent'.
+->[TRUE] Session state with key 'slot1' is NOT null.
+->[TRUE] Session state with key 'slot1' is equal to 'val'.
+->[TRUE] Session state with key 'slot2' is NOT null.
+->[TRUE] Session state with key 'slot2' is equal to '123'.
+->[TRUE] SessionStillOpen is TRUE.
+
+[START] intent request 'AMAZON.NoIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.YesIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.3cf57f5e-3a3a-4f93-9e8e-07774b74bc13","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.NoIntent"}}}'.
+[DONE] intent request 'AMAZON.NoIntent' in 2 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.NoIntent'.
+->[TRUE] SessionStillOpen is TRUE.
+
 [START] intent request 'AMAZON.RepeatIntent' ...
-→ [INFO] Invoke lambda function 'lambda-function-name'.
-→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"myIntent3","slot1":{"name":"slot1","value":"true"},"slot2":{"name":"slot2","value":"321"}},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.c34dc76c-2ac4-4638-95e2-60d5b88d8c33","timestamp":"2016-12-29T22:30:16Z","locale":"en-US","intent":{"name":"AMAZON.RepeatIntent"}}}'.
-[DONE] intent request 'AMAZON.RepeatIntent' in 3 ms.
-→ [PASSED] Custom predicate matches.
-→ [PASSED] StandardCardLargeImageUrl is NOT equal to 'https://img/small.jpg'.
-→ [PASSED] StandardCardLargeImageUrl is equal to 'https://img/large.jpg'.
-→ [PASSED] Session state with key 'myDebugFlag' exists.
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.NoIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.07e77f5f-026b-45ea-abb4-bc161c4d9f05","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.RepeatIntent"}}}'.
+[DONE] intent request 'AMAZON.RepeatIntent' in 1 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.RepeatIntent'.
+->[TRUE] SessionStillOpen is TRUE.
+
+[START] intent request 'AMAZON.CancelIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.RepeatIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.1b4a2e4f-54cd-467e-8c7f-1d26721a3e3b","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.CancelIntent"}}}'.
+[DONE] intent request 'AMAZON.CancelIntent' in 7 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.CancelIntent'.
+->[TRUE] SessionStillOpen is TRUE.
+
+[START] intent request 'AMAZON.StopIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.CancelIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.bd72143a-7858-458a-a216-a0fdd48968f5","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.StopIntent"}}}'.
+[DONE] intent request 'AMAZON.StopIntent' in 1 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.StopIntent'.
+->[TRUE] SessionStillOpen is TRUE.
+
+[START] intent request 'AMAZON.StartOverIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.StopIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.a38afcfd-d122-4ac3-8aa0-8d06008b52d5","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.StartOverIntent"}}}'.
+[DONE] intent request 'AMAZON.StartOverIntent' in 1 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.StartOverIntent'.
+->[TRUE] SessionStillOpen is TRUE.
+
+[START] intent request 'AMAZON.HelpIntent' ...
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.StartOverIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"IntentRequest","requestId":"EdwRequestId.bb64e3cf-b617-477d-a127-635d425faa40","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","intent":{"name":"AMAZON.HelpIntent"}}}'.
+[DONE] intent request 'AMAZON.HelpIntent' in 1 ms.
+->[TRUE] Session state with key 'intent' is NOT null.
+->[TRUE] Session state with key 'intent' is equal to 'AMAZON.HelpIntent'.
+->[TRUE] SessionStillOpen is TRUE.
 
 [START] request session end with reason 'USER_INITIATED'.
-→ [INFO] Invoke lambda function 'lambda-function-name'.
-→ [INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.407cd45c-f8e5-4d24-a1d7-cc6c35ac12c8","application":{"applicationId":"amzn1.ask.skill.58bf9816-8b82-4a61-ae6b-0702f51c8751"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.RepeatIntent","slot1":{"name":"slot1","value":"true"},"slot2":{"name":"slot2","value":"321"}},"user":{"userId":"amzn1.ask.account.EBTK1BQLMLUTFETLPAFEY6PRIKISO0SXF72CA5ERS0JXUNLM3CHIJCNE6HNMJH4Y5DKDLGYKKHYI79KCTXZ9HK7X98ZSNVBLWDIMTHWK9TXRVVWJOKFG4UL49XZWA8LAIS3SCSYATLQO2OR6JZIWHCP5RDZAHBUL67WZZRFFAOXZBERULGGBLEIGRT2VVUWFNQJOQ2HTHMBJQPP"}},"context":null,"request":{"type":"SessionEndedRequest","requestId":"EdwRequestId.a064b024-7f74-4535-8452-7e34d5d9f418","timestamp":"2016-12-29T22:30:16Z","locale":"en-US","reason":"USER_INITIATED","error":null}}'.
-[DONE] request session end with reason 'USER_INITIATED'.```
+->[INFO] Invoke lambda function 'myLambdaFunctionName'.
+->[INFO] with request payload '{"version":"1.0","session":{"new":false,"sessionId":"SessionId.567f262e-de60-4432-90bf-dcd78992db86","application":{"applicationId":"myApplicationId"},"attributes":{"myDebugFlag":true,"intent":"AMAZON.HelpIntent","slot1":{"name":"slot1","value":"val"},"slot2":{"name":"slot2","value":"123"}},"user":{"userId":"myUserId","accessToken":"myAccessToken"}},"context":null,"request":{"type":"SessionEndedRequest","requestId":"EdwRequestId.92f4cc2d-de9d-479e-a8bb-57423097f045","timestamp":"2010-09-30T11:11:13Z","locale":"de-DE","reason":"USER_INITIATED","error":null}}'.
+[DONE] request session end with reason 'USER_INITIATED'.
+```
