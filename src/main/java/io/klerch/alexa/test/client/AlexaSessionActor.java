@@ -86,9 +86,9 @@ public class AlexaSessionActor extends AlexaActor {
     public void exploitResponse(final AlexaResponse response) {
         if (!response.isEmpty()) {
             // remember session closed
-            sessionClosed = response.sessionEnded();
+            sessionClosed = response.getResponseEnvelope().getResponse().getShouldEndSession();
             // apply session attributes for next request
-            applySessionAttributes(response.getSessionAttributes());
+            applySessionAttributes(response.getResponseEnvelope().getSessionAttributes());
         }
     }
 
@@ -273,6 +273,7 @@ public class AlexaSessionActor extends AlexaActor {
     /**
      * Sleeps for some time to delay the next request. This might be useful if your
      * skill has time-dependant behaviors.
+     * @param millis milliseconds to sleep
      * @return skill's response
      */
     public AlexaSessionActor delay(long millis) {

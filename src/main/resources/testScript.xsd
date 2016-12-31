@@ -30,7 +30,7 @@
                 <xs:element name="sessions" minOccurs="0" maxOccurs="1">
                     <xs:complexType>
                         <xs:sequence>
-                            <xs:element name="session" type="session" minOccurs="0" maxOccurs="unbounded" />
+                            <xs:element name="session" type="actionSet" minOccurs="0" maxOccurs="unbounded" />
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
@@ -38,7 +38,7 @@
         </xs:complexType>
     </xs:element>
 
-    <xs:complexType name="session">
+    <xs:complexType name="actionSet">
         <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="intent" type="actionForIntent" minOccurs="0" maxOccurs="unbounded" />
             <xs:element name="delay" minOccurs="0" maxOccurs="unbounded">
@@ -76,6 +76,7 @@
     <xs:complexType name="action">
         <xs:sequence>
             <xs:group ref="assertions" />
+            <xs:group ref="conditionals" />
         </xs:sequence>
     </xs:complexType>
 
@@ -158,6 +159,132 @@
                     <xs:complexType>
                         <xs:attribute name="key" type="xs:string" use="required"/>
                         <xs:attribute name="value" type="xs:string" use="required"/>
+                    </xs:complexType>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
+    </xs:group>
+
+    <xs:group name="conditionals">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="isTrue">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="assertion" type="assertion" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="isFalse">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="assertion" type="assertion" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="exists">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="asset" type="asset" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="notExists">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="asset" type="asset" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="equals">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="asset" type="asset" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="notEquals">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="asset" type="asset" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="matches">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="asset" type="asset" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionEnded" type="actionSet" />
+                <xs:element name="sessionStillOpen" type="actionSet" />
+                <xs:element name="sessionStateExists">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionStateNotNull">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionStateNotBlank">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionStateEquals">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionStateContains">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessionStateMatches">
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="actionSet">
+                                <xs:attribute name="key" type="xs:string" use="required"/>
+                                <xs:attribute name="value" type="xs:string" use="required"/>                            </xs:extension>
+                        </xs:complexContent>
                     </xs:complexType>
                 </xs:element>
             </xs:choice>

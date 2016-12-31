@@ -45,13 +45,13 @@ public class AlexaUnitClient extends AlexaClient {
         final InputStream inputStream = new ByteArrayInputStream(payload.getBytes());
         try {
             final long startTimestamp = System.currentTimeMillis();
-            log.info(String.format("→ [INFO] Call request handler '%s'.", requestStreamHandler.getClass().getCanonicalName()));
-            log.debug(String.format("→ [INFO] with request payload '%s'.", payload));
+            log.info(String.format("->[INFO] Call request handler '%s'.", requestStreamHandler.getClass().getCanonicalName()));
+            log.debug(String.format("->[INFO] with request payload '%s'.", payload));
             requestStreamHandler.handleRequest(inputStream, outputStream, context);
             lastExecutionMillis = System.currentTimeMillis() - startTimestamp;
         } catch (final IOException e) {
             final String msg = String.format("Error on invoking request stream handler. %s", e.getMessage());
-            log.error(String.format("→ [ERROR] %s", msg));
+            log.error(String.format("->[ERROR] %s", msg));
             throw new RuntimeException(msg, e);
         }
         return request.expectsResponse() ?

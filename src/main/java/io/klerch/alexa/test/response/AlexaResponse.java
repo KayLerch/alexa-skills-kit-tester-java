@@ -8,6 +8,7 @@ import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.request.AlexaRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -35,6 +36,10 @@ public class AlexaResponse {
         }
     }
 
+    public SpeechletResponseEnvelope getResponseEnvelope() {
+        return this.envelope;
+    }
+
     /**
      * An AlexaResponse is empty for requests that do not get a response from the skill
      * e.g. the SessionStartedRequest.
@@ -55,7 +60,7 @@ public class AlexaResponse {
         final String assertionText = String.format("Execution is not longer than %s ms.", millis);
         final long executionMillis = request.getActor().getClient().getLastExecutionMillis();
         Validate.inclusiveBetween(0L, millis, executionMillis, "[FAILED] Assertion '%1Ss' is FALSE. Was %2Ss ms.", assertionText, executionMillis);
-        log.debug(String.format("→ [PASSED] %s", assertionText));
+        log.debug(String.format("->[PASSED] %s", assertionText));
         return this;
     }
 
@@ -96,7 +101,8 @@ public class AlexaResponse {
      * @return True, if assertion is true
      */
     public boolean isTrue(final AlexaAssertion assertion) {
-        return assertion.isTrue(envelope);
+        final String conditionalText = String.format("%1$s is TRUE.", assertion.name());
+        return result(assertion.isTrue(envelope), conditionalText);
     }
 
     /**
@@ -116,7 +122,8 @@ public class AlexaResponse {
      * @return True, if assertion is false
      */
     public boolean isFalse(final AlexaAssertion assertion) {
-        return !isTrue(assertion);
+        final String conditionalText = String.format("%1$s is NOT true.", assertion.name());
+        return result(!assertion.isTrue(envelope), conditionalText);
     }
 
     /**
@@ -136,7 +143,8 @@ public class AlexaResponse {
      * @return True, if the asset exists
      */
     public boolean exists(final AlexaAsset asset) {
-        return asset.exists(envelope);
+        final String conditionalText = String.format("%1$s exists.", asset.name());
+        return result(asset.exists(envelope), conditionalText);
     }
 
     /**
@@ -156,7 +164,8 @@ public class AlexaResponse {
      * @return True, if the asset does not exist
      */
     public boolean notExists(final AlexaAsset asset) {
-        return !exists(asset);
+        final String conditionalText = String.format("%1$s does NOT exist.", asset.name());
+        return result(!asset.exists(envelope), conditionalText);
     }
 
     /**
@@ -180,7 +189,8 @@ public class AlexaResponse {
      * @return True, if the asset has the value given
      */
     public boolean equals(final AlexaAsset asset, final Object value) {
-        return asset.equals(envelope, value);
+        final String conditionalText = String.format("%1$s is equal to '%2$s'.", asset.name(), value);
+        return result(asset.equals(envelope, value), conditionalText);
     }
 
     /**
@@ -204,7 +214,8 @@ public class AlexaResponse {
      * @return True, if the asset has not the value given
      */
     public boolean notEquals(final AlexaAsset asset, final Object value) {
-        return !equals(asset, value);
+        final String conditionalText = String.format("%1$s is NOT equal to '%2$s'.", asset.name(), value);
+        return result(!asset.equals(envelope, value), conditionalText);
     }
 
     /**
@@ -228,7 +239,8 @@ public class AlexaResponse {
      * @return True, if the value matches the pattern given.
      */
     public boolean matches(final AlexaAsset asset, final String pattern) {
-        return asset.matches(envelope, pattern);
+        final String conditionalText = String.format("%1$s matches pattern '%2$s'.", asset.name(), pattern);
+        return result(asset.matches(envelope, pattern), conditionalText);
     }
 
     /**
@@ -263,16 +275,8 @@ public class AlexaResponse {
      * throws an IllegalArgumentException in case shouldEndSession is true.
      * @return True, if shouldEndSession is false
      */
-    public boolean sessionOpen() {
+    public boolean sessionStillOpen() {
         return isTrue(AlexaAssertion.SessionStillOpen);
-    }
-
-    /**
-     * @return session attributes that came in with the last response and that will
-     * be send with the next request.
-     */
-    public Map<String, Object> getSessionAttributes() {
-        return envelope.getSessionAttributes();
     }
 
     /**
@@ -292,7 +296,8 @@ public class AlexaResponse {
      * @return True, if session attribute with given key exists.
      */
     public boolean sessionStateExists(final String key) {
-        return envelope.getSessionAttributes().containsKey(key);
+        final String conditionalText = String.format("Session state with key '%1$s' exists.", key);
+        return result(envelope.getSessionAttributes().containsKey(key), conditionalText);
     }
 
     /**
@@ -312,7 +317,8 @@ public class AlexaResponse {
      * @return True, if session attributes value with given key is not null
      */
     public boolean sessionStateNotNull(final String key) {
-        return getSlotValue(key).orElse(null) != null;
+        final String conditionalText = String.format("Session state with key '%1$s' is NOT null.", key);
+        return result((getSlotValue(key).orElse(null) != null), conditionalText);
     }
 
     /**
@@ -332,7 +338,9 @@ public class AlexaResponse {
      * @return True, if session attributes value with given key is not blank
      */
     public boolean sessionStateNotBlank(final String key) {
-        return sessionStateNotNull(key) && StringUtils.isNotBlank(String.valueOf(getSlotValue(key).orElse("")));
+        final String conditionalText = String.format("Session state with key '%1$s' is NOT blank.", key);
+        final boolean conditionalResult = sessionStateNotNull(key) && StringUtils.isNotBlank(String.valueOf(getSlotValue(key).orElse("")));
+        return result(conditionalResult, conditionalText);
     }
 
     /**
@@ -354,11 +362,10 @@ public class AlexaResponse {
      * @return True, if the session attributes value equals the value given
      */
     public boolean sessionStateEquals(final String key, final String value) {
-        if (value != null) {
-            return sessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).equals(value);
-        } else {
-            return envelope.getSessionAttributes().getOrDefault(key, null) == null;
-        }
+        final String conditionalText = String.format("Session state with key '%1$s' is equal to '%2$s'.", key, value);
+        final boolean conditionalResult = value != null ? sessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).equals(value) :
+                (envelope.getSessionAttributes().getOrDefault(key, null) == null);
+        return result(conditionalResult, conditionalText);
     }
 
     /**
@@ -380,7 +387,9 @@ public class AlexaResponse {
      * @return True, if the session attribute value contains the given string.
      */
     public boolean sessionStateContains(final String key, final String subString) {
-        return sessionStateNotNull(key) && StringUtils.contains(String.valueOf(getSlotValue(key).orElse("")), subString);
+        final String conditionalText = String.format("Session state with key '%1$s' contains '%2$s'.", key, subString);
+        final boolean conditionalResult = sessionStateNotNull(key) && StringUtils.contains(String.valueOf(getSlotValue(key).orElse("")), subString);
+        return result(conditionalResult, conditionalText);
     }
 
     /**
@@ -402,7 +411,9 @@ public class AlexaResponse {
      * @return True, if the value matches the pattern given.
      */
     public boolean sessionStateMatches(final String key, final String regex) {
-        return sessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).matches(regex);
+        final String conditionalText = String.format("Session state with key '%1$s' matches pattern '%2$s'.", key, regex);
+        final boolean conditionalResult = sessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).matches(regex);
+        return result(conditionalResult, conditionalText);
     }
 
     /**
@@ -416,8 +427,13 @@ public class AlexaResponse {
 
     private AlexaResponse validate(final boolean assertionResult, final String assertionText) {
         Validate.isTrue(assertionResult, "[FAILED] Assertion '%1$s' is FALSE.", assertionText);
-        log.debug(String.format("→ [PASSED] %s", assertionText));
         return this;
+    }
+
+    private boolean result(final boolean conditionalResult, final String conditionalText) {
+        final String result = conditionalResult ? "TRUE" : "FALSE";
+        log.info(String.format("->[%1$s] %2$s", result, conditionalText));
+        return conditionalResult;
     }
 
     @SuppressWarnings("unchecked")

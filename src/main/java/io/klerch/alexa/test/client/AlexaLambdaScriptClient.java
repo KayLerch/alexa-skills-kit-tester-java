@@ -8,6 +8,7 @@ import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
 import org.joox.Match;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import java.io.File;
@@ -19,12 +20,14 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.joox.JOOX.$;
 
 public class AlexaLambdaScriptClient extends AlexaLambdaClient {
     private final static Logger log = Logger.getLogger(AlexaLambdaScriptClient.class);
     private final Match mSessions;
+    private AlexaSessionActor actor;
 
     AlexaLambdaScriptClient(final AlexaLambdaScriptClientBuilder builder) {
         super(builder);
@@ -38,38 +41,39 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
         }
 
         mSessions.find("session").forEach(session -> {
-            final AlexaSessionActor actor = this.startSession();
-
-            $(session).children().forEach(request -> {
-                final String requestName = request.getLocalName();
-                // in case request is a delay, must provide a value as attribute
-                Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
-                // in case request is a custom intent, must provide a name as attribute
-                Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
-                // request must match method in actor
-                Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
-
-                if ("delay".equals(requestName)) {
-                    actor.delay(Long.parseLong(request.getAttribute("value")));
-                } else {
-                    try {
-                        // request the skill with intent
-                        final AlexaResponse response = "intent".equals(requestName) ?
-                                actor.intent(request.getAttribute("name"), extractSlots($(request))) :
-                                (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
-                        // validate response
-                        validateResponse(response, $(request));
-                    } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                        final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
-                        log.error(msg, e);
-                        throw new RuntimeException(msg, e);
-                    }
-                }
-            });
-
+            actor = this.startSession();
+            $(session).children().forEach(processActionInSession);
             actor.endSession();
         });
     }
+
+    private Consumer<Element> processActionInSession = request -> {
+        final String requestName = request.getLocalName();
+        // in case request is a delay, must provide a value as attribute
+        Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
+        // in case request is a custom intent, must provide a name as attribute
+        Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
+        // request must match method in actor
+        Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
+
+        if ("delay".equals(requestName)) {
+            actor.delay(Long.parseLong(request.getAttribute("value")));
+        } else {
+            try {
+                // request the skill with intent
+                final AlexaResponse response = "intent".equals(requestName) ?
+                        actor.intent(request.getAttribute("name"), extractSlots($(request))) :
+                        (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(actor);
+                // validate response
+                validateResponse(response, $(request));
+            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
+                log.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
+        }
+    };
+
 
     private void validateResponse(final AlexaResponse response, final Match mResponse) {
         if (mResponse.isEmpty()) {
@@ -87,7 +91,7 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
             // skip request node which is at the same level as all the assertion-tags
             if ("request".equals(assertionMethod)) return;
 
-            Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+            //Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
             Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(assertionMethod)), "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
 
             Arrays.stream(response.getClass().getMethods())
@@ -115,7 +119,12 @@ public class AlexaLambdaScriptClient extends AlexaLambdaClient {
                             });
                         }
                         try {
-                            m.invoke(response, parameters.toArray());
+                            final Object result = m.invoke(response, parameters.toArray());
+                            // result only for conditional methods and those are always booleans
+                            if (result != null && Boolean.parseBoolean(result.toString())) {
+                                // in that case a conditional was true. The body should contain actions to perform (recursion starts)
+                                $(assertion).children().forEach(processActionInSession);
+                            }
                         } catch (final InvocationTargetException | IllegalAccessException e) {
                             throw new RuntimeException(e);
                         }

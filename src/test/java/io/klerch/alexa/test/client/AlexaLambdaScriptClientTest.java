@@ -20,7 +20,7 @@ public class AlexaLambdaScriptClientTest extends AlexaLambdaClientTest {
 
     @Override
     public AlexaLambdaScriptClient givenClient() throws Exception {
-        final InputStream stream = getClass().getClassLoader().getResourceAsStream("script-max.xml");
+        final InputStream stream = getClass().getClassLoader().getResourceAsStream("script-deep.xml");
         return AlexaLambdaScriptClient
                 .create(stream)
                 .withLambdaClient(givenLambdaMock())

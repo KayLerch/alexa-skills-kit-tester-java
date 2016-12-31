@@ -50,8 +50,8 @@ public class AlexaLambdaClient extends AlexaClient {
                 .withFunctionName(lambdaFunctionName)
                 .withPayload(payload);
         final long startTimestamp = System.currentTimeMillis();
-        log.info(String.format("→ [INFO] Invoke lambda function '%s'.", lambdaFunctionName));
-        log.debug(String.format("→ [INFO] with request payload '%s'.", payload));
+        log.info(String.format("->[INFO] Invoke lambda function '%s'.", lambdaFunctionName));
+        log.debug(String.format("->[INFO] with request payload '%s'.", payload));
         final InvokeResult invokeResult = lambdaClient.invoke(invokeRequest);
         lastExecutionMillis = System.currentTimeMillis() - startTimestamp;
         return invocationType.equals(InvocationType.RequestResponse) ?

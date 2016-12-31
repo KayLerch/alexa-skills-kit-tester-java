@@ -228,18 +228,16 @@ public class AlexaResponseTest {
     @Test
     public void sessionOpen() throws Exception {
         final AlexaResponse response = givenResponse();
-        Assert.assertTrue(response.sessionOpen());
+        Assert.assertTrue(response.sessionStillOpen());
 
         final AlexaResponse response2 = givenResponse(AssetFactory.givenResponseWithSsmlOutputSpeech("text", true));
-        Assert.assertFalse(response2.sessionOpen());
+        Assert.assertFalse(response2.sessionStillOpen());
     }
 
     @Test
-    public void getSessionAttributes() throws Exception {
+    public void getResponseEnvelope() throws Exception {
         final AlexaResponse response = givenResponse(AssetFactory.givenResponseWithSessionAttribute("attr", true));
-        Assert.assertNotNull(response.getSessionAttributes());
-        Assert.assertEquals(1, response.getSessionAttributes().size());
-        Assert.assertTrue(response.getSessionAttributes().containsKey("attr"));
+        Assert.assertNotNull(response.getResponseEnvelope());
     }
 
     @Test
