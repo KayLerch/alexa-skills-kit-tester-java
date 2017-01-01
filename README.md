@@ -1,4 +1,5 @@
 [![Join the chat at https://gitter.im/alexa-skills-kit-tester-java/Lobby](https://badges.gitter.im/alexa-skills-kit-tester-java/Lobby.svg)](https://gitter.im/alexa-skills-kit-tester-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Maven central](https://img.shields.io/badge/maven%20central-v0.1.0-orange.svg)](http://search.maven.org/#artifactdetails%7Cio.klerch%7Calexa-skills-kit-tester-java%7C0.1.0%7Cjar)
 ![SonarQube Coverage](https://img.shields.io/badge/code%20coverage-88%25-green.svg)
 
 
