@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<script xmlns="http://klerch.io/alexa/skills-kit-tester"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://klerch.io/alexa/skills-kit-tester testScript.xsd">
+    <configuration>
+        <endpoint type="Lambda">myLambdaFunctionName</endpoint>
+        <locale>de-DE</locale>
+        <application id="myApplicationId" />
+    </configuration>
+    <sessions>
+        <session>
+            <launch>
+                <assertTrue assertion="HasCardIsSimple"/>
+                <assertMatches asset="OutputSpeechPlainText" value="Hello.*"/>
+                <sessionStateEquals key="knownUser" value="true">
+                    <intent name="myIntent">
+                        <request>
+                            <slots><slot key="mySlot" value="someValue" /></slots>
+                        </request>
+                        <assertExecutionTimeLessThan value="1000" />
+                        <assertFalse assertion="HasDirectiveIsPlay"/>
+                    </intent>
+                </sessionStateEquals>
+                <sessionStateEquals key="knownUser" value="false">
+                    <help>
+                        <assertTrue assertion="HasOutputSpeechIsSsml"/>
+                        <assertSessionEnded />
+                    </help>
+                </sessionStateEquals>
+            </launch>
+        </session>
+    </sessions>
+</script>

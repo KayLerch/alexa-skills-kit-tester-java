@@ -4,170 +4,123 @@
 
 # Alexa Skills Kit Testing Framework
 
-This framework lets you script and execute complex interactions with your Alexa skill 
-in order to simulate a user's conversation. 
+This framework lets you script and execute complex conversations with your Alexa skills. Scripts
+are expressed in either Java-Code or XML and can be used to automate functional tests or to drive
+test-driven development of Alexa skills.
+ 
+### Alexa-Client 
+The framework creates an _AlexaClient_ that simulates the Alexa-service sitting between your skill and an Alexa
+device. It takes clientside configuration like the SkillId, UserId and Token and the locale.
 
-## How to use
-### Unit & integration testing
-If you built your skill with Java you can use this framework to write unit & integration
-tests. The _AlexaUnitClient_ is leveraged to fire requests at your _RequestStreamHandler_ implementation
- class. The resulting _AlexaResponse_ object provides a lot of methods to validate your skill's response
- with making assertions. The fluent interface not only looks beautiful but is easy to understand
- and perfect to script your conversation without being too technical.
+### The Skill-Endpoint
+An _AlexaClient_ needs an endpoint to fire requests at. The endpoint is a gate to the implementation of your Alexa skill
+and is one of the following:
+- An already existing and running Lambda function in AWS.
+- A Java-class deriving from _RequestStreamHandler_ interface of AWS SDK. Referencing a Java-object
+only makes sense when you write tests that execute while compiling and packaging a Java skill project.
 
-##### Code a skill conversation in Java
 ```java
-@Test
-public void doConversation() throws Exception {
-    final AlexaClient client = AlexaUnitClient
-        .create("applicationId", new MyRequestStreamHandler())
-        .build();
+final AlexaEndpoint lambdaEndpoint = AlexaLambdaEndpoint.create("lamdaFunctionName").build();
+final AlexaClient lambdaClient = AlexaClient.create(lambdaEndpoint, "appId")
+    .withLocale(Locale.GERMANY)
+    .withUserId("userId")
+    // let your skill believe it's day after tomorrow
+    .withTimestamp(DateUtils.addDays(new Date(), 2))
+    .build();
         
-    client.startSession() // SessionStartedRequest
-        .launch() // LaunchRequest
-            .assertThat(response -> response.getVersion().equals("1.0"))
-            .assertTrue(AlexaAssertion.HasCardIsSimple)
-            .assertExecutionTimeLessThan(1000)
-            .done()
-        .intent("myIntent", "slot1", true) // IntentRequest with custom intent
-            .assertSessionStillOpen()
-            .assertSessionStateEquals("slot1", "true")
-            .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello.*")
-            .done()
-        .delay(1000)
-        .repeat() // IntentRequest with builtin AMAZON.RepeatIntent
-            .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello again.*")
-            .done()
-        .endSession(); // SessionEndedRequested
-    }
+AlexaEndpoint unitEndpoint = AlexaRequestStreamHandlerEndpoint.create(MyRequestHandler.class).build();
+final AlexaClient unitClient = AlexaClient.create(unitEndpoint).build();
 ```
-The above unit tests fires five speechlet requests at your skill and validates
-their outputs. Assert methods throw runtime exceptions to indicate an invalid response.
-In order to avoid those exceptions on validation each assert-method has an equivalent
-  condition-method that returns a Boolean. You will love them if you want to script alternative
-  conversation paths on certain skill response contents.
 
-##### Design a skill conversation in XML
-Tired of coding tests? Even cooler, you can also script your conversation in XML and leverage
-_AlexaLambdaScriptClient_ to execute it against your skill Lambda function.
+### The Script
+Now you can give one of these _AlexaClients_ a conversation it should have with an Alexa skill sitting behind
+the configured _AlexaEndpoint_. You could either script skill conversations in XML or with the fluent interface
+of the _AlexaClient_-object. Before we have a look at a script it's worth explaining the parts of it.
+ 
+##### Actions
+An action simply is one request that is send to your skill. Usually this is a _Speechlet-Request_ containing
+an _Intent_ or _Event_. Builtin-Intents like the _AMAZON.HelpIntent_ got their own actions as well as the
+_LaunchRequest_, the _SessionStarted_- and _SessionEndedRequests_. Custom intents got the generic _intent_-action
+that is customizable with a name and slots.
+
+##### Assertions
+Once an _Action_ is performed by the _AlexaClient_ and your skill returned the JSON response you want to
+validate its contents. Numerous _assert_-methods can be used to make assertions and validate values of _assets_
+contained in the response. Note, that _assert_-methods throw runtime exceptions. Assertions you define must be true otherwise
+you script won't continue to run. A failed assertion lets the whole test fail and usually indicates an unexpected
+ behavior of you skill - something that needs your attention.
+
+##### Assets
+An asset is an element inside the skill response. This can be the output-speech, a reprompt, card, directive or session attribute.
+Those assets have values you can validate with the _assert_-methods as well. 
+
+##### Conditionals
+A condition really much does the same as an _assertion_ but with one difference. It only validates without
+throwing an exception. Therefor, you can use _conditionals_ to make decisions while having the conversation and
+go into different directions the same way a user would do when using your skill. That said, scripts not only
+follow static routes but can also have variable paths - where all of them will be valid unless none of them
+fails one of its subsequent assertions. Each _assertion_ has an equivalent _conditional_-method.
 
 ```xml
-<test>
+<?xml version="1.0"?>
+<script>
     <configuration>
-        <endpoint>myLambdaFunctionName</endpoint>
+        <endpoint type="Lambda">myLambdaFunctionName</endpoint>
         <locale>de-DE</locale>
         <application id="myApplicationId" />
     </configuration>
     <sessions>
         <session>
-            <launch>
-                <assertTrue assertion="HasOutputSpeech" />
-                <assertFalse assertion="HasOutputSpeechIsPlainText" />
-                <assertEquals asset="StandardCardTitle" value="card_title" />
-            </launch>
-            <delay value="1000" />
-            <intent name="intent1">
-                <request>
-                    <slots>
-                        <slot key="slot1" value="val" />
-                    </slots>
-                </request>
-                <assertSessionStateEquals key="slot1" value="val" />
-            </intent>
-            <yes>
-                <assertMatches asset="OutputSpeechSsml" value=".*test.*" />
-            </yes>
-        </session>
-        <session>
-            <help>
-                <assertTrue assertion="HasOutputSpeechIsSsml" />
-            </help>
-        </session>
-    </sessions>
-</test>
-```
-Have a look at a rich example file [here](/src/test/resources/script-max.xml) and use the 
-[schema file](/src/main/resources/testScript.xsd) to create your own test-script.
-
-You can also use conditions in those scripts (there's one equivalent for each assert-tag). 
-This is how you add alternative conversation-paths in case of custom criteria. Feel free to 
-nest as deep as you want.
-```xml
-<test>
-    <configuration>
-        <!-- ... -->
-    </configuration>
-    <sessions>
-        <session>
-            <launch>
-                <assertSessionStateEquals key="myDebugFlag" value="true" />
-                <isTrue assertion="HasCard">
-                    <yes>
-                        <assertExists asset="Card" />
-                        <matches asset="OutputSpeechSsml" value=".*test.*">
-                            <yes>
-                                <assertSessionStillOpen />
-                                <isTrue assertion="HasDirective">
-                                    <help>
-                                        <assertExists asset="DirectiveClearQueue"/>
-                                    </help>
-                                </isTrue>
-                            </yes>
-                            <cancel>
-                                <assertSessionStillOpen />
-                            </cancel>
-                        </matches>
-                    </yes>
-                </isTrue>
-                <isFalse assertion="HasCard">
-                    <no>
-                        <assertNotExists asset="DirectiveClearQueue" />
-                    </no>
-                    <delay value="1000"/>
-                </isFalse>
+            <launch> <!-- ACTION -->
+                <assertTrue assertion="HasCardIsSimple"/> <!-- ASSERTION -->
+                <assertMatches asset="OutputSpeechPlainText" value="Hello.*"/> <!-- ASSERTION -->
+                <sessionStateEquals key="knownUser" value="true"> <!-- CONDITIONAL -->
+                    <intent name="myIntent"> <!-- ACTION -->
+                        <request>
+                            <slots><slot key="mySlot" value="someValue" /></slots>
+                        </request>
+                        <assertExecutionTimeLessThan value="1000" /> <!-- ASSERTION -->
+                        <assertFalse assertion="HasDirectiveIsPlay"/> <!-- ASSERTION -->
+                    </intent>
+                </sessionStateEquals>
+                <sessionStateEquals key="knownUser" value="false"> <!-- CONDITIONAL -->
+                    <help> <!-- ACTION -->
+                        <assertTrue assertion="HasOutputSpeechIsSsml"/> <!-- ASSERTION -->
+                        <assertSessionEnded /> <!-- ASSERTION -->
+                    </help>
+                </sessionStateEquals>
             </launch>
         </session>
     </sessions>
-</test>
+</script>
 ```
-Have a look at another example file [here](/src/test/resources/script-deep.xml).
+This is a short script starting with a _LaunchRequest_ that is expected to return a _SimpleCard_ 
+and a plain-text saying Hello ... 
+Depending on the session-attribute _knownUser_ this session continues with either a custom intent
+or a help-intent. A _conditional_-tag can contain more _actions_ that can contain their own _assertions_ and _conditionals_.
+ You can nest these structures as deep as you like allowing you to have really complex and long conversations. 
 
-To execute the XML script you need to do the following:
+See more example scripts [here](/src/test/resources/) and use this 
+[xml schema file](/src/main/resources/testScript.xsd) to create and validate your own test-scripts.
+
+Maybe you noticed the _configuration_-section in the script-XML. It can be used to configure an _AlexaClient_
+with all the settings having an impact on how requests are fired at your skill. Store you script-files
+wherever you want - in a JAR, S3-bucket or on your file-server. Simply reference the file when you instantiate 
+ an _AlexaClient_ and call _startScript_ to execute the conversations defined in the XML.
 
 ```java
-public class MyTestLambdaFunction implements RequestStreamHandler {
-    @Override
-    public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-        final AlexaLambdaScriptClient client = AlexaLambdaScriptClient
-                        .create(URI.create("https://url.to/testscript.xml"))
-                        .build();
-        client.startScript();
-    }
-}
+final AlexaClient client = AlexaClient
+        .create(new URL("https://url.to/your/script.xml"))
+        .build();
+client.startScript();
 ```
 
-### Live testing
-When your skill is in production it is even more important to know if everything
-is doing fine. In case your skill runs in a Lambda function you are good to go with this 
-framework to establish an early-warning-system for potential Alexa skill outages. 
-Just think of a second Lambda function running the above code against your
-live skill.
+Now think about having these two lines of code in a separate Lambda-function and see what's the
+benefit here:
 
-```java
-public class MyTestLambdaFunction implements RequestStreamHandler {
-    @Override
-    public void handleRequest(InputStream inputStream, OutputStream outputStream, Context context) throws IOException {
-        final AlexaClient client = AlexaLambdaClient
-                .create("applicationId", "lambda-function-name") 
-                .withLocale(Locale.US)
-                .withUserId("myUserId")
-                .build();
-            // ...
-    }
-}
-```
+### Live-Testing
 
-That Lambda function could be scheduled to run every x minutes. As all the
+This "test"-Lambda function could be scheduled to run every X minutes. As all the
  _assert_-methods will throw runtime exceptions if the assertion is false that Lambda function
  would indicate suspicious moments with runtime errors.
  
@@ -199,35 +152,63 @@ This is how a test failure reaches you or your IT staff.
 
 There you got your early-warning-system for Alexa skill outages.
 
-## Advanced introduction
-
-### AlexaClient 
-
-As seen in above code snippets you always start with creating an instance of _AlexaClient_. Depending on your
-use case you would decide for either _AlexaUnitClient_ (to test a Lambda _RequestStreamHandler_ in Java), an _AlexaLambdaClient_ 
-(to test a remote Lambda function regardless of its source language) or _AlexaLambdaScriptClient_ (also tests a remote
-Lambda function but it loads an XML test-script from a file stream).
-
-```java
-final AWSLambda lambdaClient = new AWSLambdaClient();
-final AlexaClient client = AlexaLambdaClient
-    .create("appId", "lambda-function-name")
-        .withLambdaClient(lambdaClient)
-        .withLocale(Locale.GERMANY)
-        .withUserId("uid")
-        .withAccessToken("accessToken")
-        .withTimestamp(DateUtils.addDays(new Date(), 5))
-        .withDebugFlagSessionAttribute("debug123flag")
-    .build();
+### Unit & integration testing
+If you built your skill with Java you can use this framework to write unit & integration
+tests. Instead of referencing a Lambda-function you point directly to the Lambda implementation class -
+  a child of _RequestStreamHandler_.
+  
+```xml
+<?xml version="1.0"?>
+<script>
+    <configuration>
+        <endpoint type="RequestStreamHandler">my.package.MyRequestHandler</endpoint>
+        <locale>en-US</locale>
+        <application id="myApplicationId" />
+    </configuration>
+    <sessions />
+</script>
 ```
 
-You have to give _AlexaClient_ the applicationId aka skillId as this one usually is validated in your
-skill code and needs to be set properly. Secondly, you need to provide information about the test object. For
-_AlexaLambdaClient_ and _AlexaLambdaScriptClient_ this is the Lambda function name, for _AlexaUnitClient_ it is an instance of _RequestStreamHandler_.
-Optionally, you can assign the _AWSLambdaClient_ of AWS SDK to _AlexaLambdaClient_ that likely ships with
-custom credentials or region settings of your choice. You can even mock that client before handing it in to _AlexaLambdaClient_.
+### The fluent interface 
 
-Finally the client takes configuration values which go into Alexa speechlet requests (UserId, AccessToken, Locale). If you don't
+When you set up your _AlexaClient_ in Java and you don't want to have a script in XML you go for
+the fluent API of this test framework. It not only looks beautiful but is easy to understand
+and perfect to script your conversation without being too technical.
+
+Instead of calling _startScript_ you begin a session with _startSession_. It returns a new object -
+the _AlexaSessionActor_ which provides all _actions_ you already got to know from the XML-script. Those
+_actions_ return an _AlexaResponse_-object that got methods for each _assertion_ and _conditional_ introduced
+before. Keep in mind that _assert_-methods throw runtime-exceptions - making them ideal for unit-tests.
+The _done_ method of _AlexaResponse_ returns the _AlexaSessionActor_ to let you continue with the next _action_
+without breaking the fluent API.
+
+```java
+AlexaEndpoint unitEndpoint = AlexaRequestStreamHandlerEndpoint.create(MyRequestHandler.class).build();
+final AlexaClient unitClient = AlexaClient.create(unitEndpoint).build();
+unitClient.startSession() // SessionStartedRequest
+    .launch() // LaunchRequest
+        .assertThat(response -> response.getVersion().equals("1.0"))
+        .assertTrue(AlexaAssertion.HasCardIsSimple)
+        .assertExecutionTimeLessThan(1000)
+        .done()
+    .intent("myIntent", "slot1", true) // IntentRequest with custom intent
+        .assertSessionStillOpen()
+        .assertSessionStateEquals("slot1", "true")
+        .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello.*")
+    .done()
+    .delay(1000)
+    .repeat() // IntentRequest with builtin AMAZON.RepeatIntent
+        .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello again.*")
+        .done()
+    .endSession(); // SessionEndedRequested
+}
+```
+
+We haven't covered _delay_ so far which can be useful if your skill makes time-dependant decisions.
+_delay_ just sleeps for an amount of milliseconds before going on with the next _action_.
+
+
+The client takes configuration values which go into Alexa _Speechlet_-requests (UserId, AccessToken, Locale). If you don't
 set these values locale defaults to en-US, userId is generated and accessToken left empty. The _DebugFlagSessionAttribute_
 optionally defines the name for a session attribute that goes into every request so skills are able to distinguish between
 a test invocation and a user call. If you wonder why it's useful to manipulate the timestamp, think of a skill
@@ -253,9 +234,9 @@ final AlexaResponse response = actor.launch();
 
 ### AlexaResponse
 
-All these actor-methods return an _AlexaResponse_ instance which not only holds the actual response envelope
+All these _action_-methods return an _AlexaResponse_ instance which not only holds the actual response envelope
 of your skill but provides a bunch of _assert_-methods you can use to validate the response. You can
-define expectations for all kinds of speechlet-assets like output-speech, reprompts, cards and directives ...
+define expectations for all kinds of _assets_ like output-speech, reprompts, cards and directives:
 
 ```java
 response.assertExists(AlexaAsset.RepromptSpeechSsml);
@@ -270,7 +251,7 @@ response.assertTrue(AlexaAssertion.HasCardIsStandard);
 response.assertFalse(AlexaAssertion.SessionEnded);
 ```
 
-or you can directly access the response envelope and form your own predicate:
+or you can directly access the response envelope and express your own predicate:
 
 ```java
 response.assertThat(speechletResponseEnvelope -> speechletResponseEnvelope.getVersion().startsWith("1"));
@@ -294,8 +275,8 @@ response.assertExecutionTimeLessThan(2500);
 ```
 
 _Assert_-methods throw runtime exceptions in case the made assertion is not true. If you want
-to validate contents of the response without causing exceptions you can make use of another set of
-methods provided by the response-object. Every _assert_-method has an equivalent method whose
+to validate contents of the response without causing exceptions you can make use of _conditional_-methods 
+provided by the response-object. Every _assert_-method has an equivalent _conditional_-method whose
 return value is a Boolean. Now you are able to have dynamic conversation paths and make decisions based
  on skill responses.
  
@@ -305,34 +286,6 @@ if (response2.equals(AlexaAsset.OutputSpeechPlainText, "Hi")) {
     final AlexaResponse response3 = actor.help();
 }
 ```
-
-### The fluent interface
-
-Finally you should learn about the _done_-method you will use if you are a fan of fluent interfaces. _done_
-is called to simply get back the _AlexaSessionActor_ for another request. 
- 
-```java
-client.startSession() // SessionStartedRequest
-    .launch() // LaunchRequest
-        .assertThat(response -> response.getVersion().equals("1.0"))
-        .assertTrue(AlexaAssertion.HasCardIsSimple)
-        .assertExecutionTimeLessThan(1000)
-        .done()
-    .intent("myIntent", "slot1", true) // IntentRequest with custom intent
-        .assertSessionStillOpen()
-        .assertSessionStateEquals("slot1", "true")
-        .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello.*")
-        .done()
-    .delay(1000)
-    .repeat() // IntentRequest with builtin AMAZON.RepeatIntent
-        .assertMatches(AlexaAsset.OutputSpeechSsml, ".*hello again.*")
-        .done()
-    .endSession(); // SessionEndedRequested
-}
-```
-
-The _delay_-method adds a pause between two requests - useful if your skill has time-dependant features.
-_endSession_ causes the session-closed event sent to your skill.
 
 In a fancy one-liner you can simulate a whole conversation a user might have:
 

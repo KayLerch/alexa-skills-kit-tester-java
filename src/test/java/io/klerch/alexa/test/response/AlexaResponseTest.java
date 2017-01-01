@@ -5,11 +5,20 @@ import com.amazon.speech.ui.SsmlOutputSpeech;
 import io.klerch.alexa.test.AssetFactory;
 import io.klerch.alexa.test.asset.AlexaAssertion;
 import io.klerch.alexa.test.asset.AlexaAsset;
+import io.klerch.alexa.test.client.AlexaClient;
+import io.klerch.alexa.test.client.endpoint.AlexaEndpoint;
+import io.klerch.alexa.test.client.endpoint.AlexaLambdaEndpoint;
+import io.klerch.alexa.test.client.endpoint.AlexaRequestStreamHandlerEndpoint;
 import io.klerch.alexa.test.request.AlexaIntentRequest;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import java.net.URL;
+import java.util.Date;
+import java.util.Locale;
 
 public class AlexaResponseTest {
     @Rule
@@ -26,6 +35,11 @@ public class AlexaResponseTest {
 
     @Test
     public void assertThat() throws Exception {
+        final AlexaClient client = AlexaClient
+                .create(new URL("https://url.to/your/script.xml"))
+                .build();
+        client.startScript();
+
         final AlexaResponse response = givenResponse();
 
         Assert.assertEquals(response, response.assertThat(e -> !e.getResponse().getShouldEndSession()));
