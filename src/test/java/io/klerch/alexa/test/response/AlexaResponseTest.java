@@ -35,11 +35,6 @@ public class AlexaResponseTest {
 
     @Test
     public void assertThat() throws Exception {
-        final AlexaClient client = AlexaClient
-                .create(new URL("https://url.to/your/script.xml"))
-                .build();
-        client.startScript();
-
         final AlexaResponse response = givenResponse();
 
         Assert.assertEquals(response, response.assertThat(e -> !e.getResponse().getShouldEndSession()));
