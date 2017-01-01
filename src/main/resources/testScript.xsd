@@ -3,13 +3,17 @@
            targetNamespace="http://klerch.io/alexa/skills-kit-tester"
            xmlns="http://klerch.io/alexa/skills-kit-tester"
            elementFormDefault="qualified">
-    <xs:element name="test">
+    <xs:element name="script">
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="configuration" minOccurs="1" maxOccurs="1">
                     <xs:complexType>
                         <xs:all>
-                            <xs:element name="endpoint" type="xs:string" minOccurs="1" maxOccurs="1" nillable="false" />
+                            <xs:element name="endpoint" minOccurs="1" maxOccurs="1" nillable="false">
+                                <xs:complexType>
+                                    <xs:attribute name="type" type="endpointType" use="required"/>
+                                </xs:complexType>
+                            </xs:element>
                             <xs:element name="locale" type="locale" minOccurs="1" maxOccurs="1" nillable="false" />
                             <xs:element name="application" minOccurs="1" maxOccurs="1" nillable="false">
                                 <xs:complexType>
@@ -314,6 +318,13 @@
             <xs:enumeration value="en-US"/>
             <xs:enumeration value="en-GB"/>
             <xs:enumeration value="de-DE"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="endpointType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Lambda"/>
+            <xs:enumeration value="RequestStreamHandler"/>
         </xs:restriction>
     </xs:simpleType>
 

@@ -4,15 +4,21 @@ import com.amazon.speech.json.SpeechletRequestEnvelope;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
+import io.klerch.alexa.test.asset.AlexaAssertion;
+import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.request.*;
 import io.klerch.alexa.test.response.AlexaResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
+import org.joox.Match;
+import org.w3c.dom.Element;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.function.Consumer;
+
+import static org.joox.JOOX.$;
 
 /**
  * The session actor manages a conversation within a single Alexa session by
@@ -297,5 +303,107 @@ public class AlexaSessionActor extends AlexaActor {
         log.info(String.format("\n[START] request session end with reason '%s'.", reason.name()));
         client.fire(new AlexaSessionEndedRequest(this, reason));
         log.info(String.format("[DONE] request session end with reason '%s'.", reason.name()));
+    }
+
+    void executeSession(final Element session) {
+        $(session).children().forEach(processActionInSession);
+        this.endSession();
+    }
+
+    private Consumer<Element> processActionInSession = request -> {
+        final String requestName = request.getLocalName();
+        // in case request is a delay, must provide a value as attribute
+        Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
+        // in case request is a custom intent, must provide a name as attribute
+        Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
+        // request must match method in actor
+        Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
+
+        if ("delay".equals(requestName)) {
+            delay(Long.parseLong(request.getAttribute("value")));
+        } else {
+            try {
+                // request the skill with intent
+                final AlexaResponse response = "intent".equals(requestName) ?
+                        intent(request.getAttribute("name"), extractSlots($(request))) :
+                        (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(this);
+                // validate response
+                validateResponse(response, $(request));
+            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
+                log.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
+        }
+    };
+
+
+    private void validateResponse(final AlexaResponse response, final Match mResponse) {
+        if (mResponse.isEmpty()) {
+            log.info("[INFO] No assertions defined in your script-file to validate skill's response.");
+            return;
+        }
+
+        mResponse.children().forEach(assertion -> {
+            final String assertionMethod = assertion.getTagName();
+            final String assetName = assertion.getAttribute("asset");
+            final String assertionName = assertion.getAttribute("assertion");
+            final String key = assertion.getAttribute("key");
+            final String value = assertion.getAttribute("value");
+
+            // skip request node which is at the same level as all the assertion-tags
+            if ("request".equals(assertionMethod)) return;
+
+            //Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+            Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(assertionMethod)), "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+
+            Arrays.stream(response.getClass().getMethods())
+                    .filter(m -> m.getName().equals(assertionMethod))
+                    .findFirst()
+                    .ifPresent(m -> {
+                        final List<Object> parameters = new ArrayList<>();
+                        if (StringUtils.containsIgnoreCase(m.getName(), "SessionState")) {
+                            if (m.getParameterCount() > 0) {
+                                parameters.add(key);
+                            }
+                            if (m.getParameterCount() > 1) {
+                                parameters.add(value);
+                            }
+                        } else {
+                            Arrays.stream(m.getParameterTypes()).forEach(pc -> {
+                                // assign value to parameter based on its type
+                                parameters.add(AlexaAsset.class.equals(pc) ?
+                                        Enum.valueOf(AlexaAsset.class, assetName) :
+                                        AlexaAssertion.class.equals(pc) ?
+                                                Enum.valueOf(AlexaAssertion.class, assertionName) :
+                                                long.class.equals(pc) ?
+                                                        Long.parseLong(value) :
+                                                        pc.cast(value));
+                            });
+                        }
+                        try {
+                            final Object result = m.invoke(response, parameters.toArray());
+                            // result only for conditional methods and those are always booleans
+                            if (result != null && Boolean.parseBoolean(result.toString())) {
+                                // in that case a conditional was true. The body should contain actions to perform (recursion starts)
+                                $(assertion).children().forEach(processActionInSession);
+                            }
+                        } catch (final InvocationTargetException | IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+        });
+    }
+
+    private List<Slot> extractSlots(final Match mRequest) {
+        final List<Slot> slots = new ArrayList<>();
+        mRequest.find("request").find("slots").find("slot").forEach(mSlot -> {
+            if (mSlot.hasAttribute("key") && mSlot.hasAttribute("value")) {
+                slots.add(Slot.builder()
+                        .withName(mSlot.getAttribute("key"))
+                        .withValue(mSlot.getAttribute("value")).build());
+            }
+        });
+        return slots;
     }
 }

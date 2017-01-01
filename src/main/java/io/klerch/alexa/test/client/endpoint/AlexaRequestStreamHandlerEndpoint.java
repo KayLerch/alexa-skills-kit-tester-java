@@ -1,4 +1,4 @@
-package io.klerch.alexa.test.client;
+package io.klerch.alexa.test.client.endpoint;
 
 import com.amazonaws.services.lambda.runtime.*;
 import io.klerch.alexa.test.request.AlexaRequest;
@@ -12,43 +12,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public class AlexaUnitClient extends AlexaClient {
-    private final static Logger log = Logger.getLogger(AlexaLambdaClient.class);
+public class AlexaRequestStreamHandlerEndpoint implements AlexaEndpoint {
+    private final static Logger log = Logger.getLogger(AlexaRequestStreamHandlerEndpoint.class);
     private final RequestStreamHandler requestStreamHandler;
     private final Context context;
-    private long lastExecutionMillis = -1;
 
-    AlexaUnitClient(final AlexaUnitClientBuilder builder) {
-        super(builder);
+    AlexaRequestStreamHandlerEndpoint(final AlexaRequestStreamHandlerEndpointBuilder builder) {
         this.requestStreamHandler = builder.requestStreamHandler;
         this.context = builder.context;
     }
 
-    public static AlexaUnitClientBuilder<AlexaUnitClient, AlexaUnitClientBuilder> create(final String applicationId, final RequestStreamHandler requestStreamHandler) {
-        return new AlexaUnitClientBuilder<>(applicationId, requestStreamHandler);
-    }
-
     public RequestStreamHandler getRequestStreamHandler() {
-        return requestStreamHandler;
+        return this.requestStreamHandler;
     }
 
-    public Context getContext() { return context; }
-
-    @Override
-    public long getLastExecutionMillis() {
-        return lastExecutionMillis;
+    public Context getContext() {
+        return this.context;
     }
 
-    @Override
     public Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final InputStream inputStream = new ByteArrayInputStream(payload.getBytes());
         try {
-            final long startTimestamp = System.currentTimeMillis();
             log.info(String.format("->[INFO] Call request handler '%s'.", requestStreamHandler.getClass().getCanonicalName()));
             log.debug(String.format("->[INFO] with request payload '%s'.", payload));
             requestStreamHandler.handleRequest(inputStream, outputStream, context);
-            lastExecutionMillis = System.currentTimeMillis() - startTimestamp;
         } catch (final IOException e) {
             final String msg = String.format("Error on invoking request stream handler. %s", e.getMessage());
             log.error(String.format("->[ERROR] %s", msg));
@@ -58,31 +46,39 @@ public class AlexaUnitClient extends AlexaClient {
                 Optional.of(new AlexaResponse(request, outputStream.toByteArray())) : Optional.empty();
     }
 
-    public static class AlexaUnitClientBuilder<T extends AlexaUnitClient, G extends AlexaUnitClientBuilder> extends AlexaClientBuilder<AlexaUnitClient, AlexaUnitClientBuilder> {
+    static AlexaRequestStreamHandlerEndpointBuilder create(final String requestStreamHandlerClass) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        return create(Class.forName(requestStreamHandlerClass).asSubclass(RequestStreamHandler.class));
+    }
+
+    public static <T extends RequestStreamHandler> AlexaRequestStreamHandlerEndpointBuilder create(final Class<T> clazz) throws IllegalAccessException, InstantiationException {
+        return create(clazz.newInstance());
+    }
+
+    public static AlexaRequestStreamHandlerEndpointBuilder create(final RequestStreamHandler streamHandler) {
+        return new AlexaRequestStreamHandlerEndpointBuilder(streamHandler);
+    }
+
+    public static class AlexaRequestStreamHandlerEndpointBuilder {
         RequestStreamHandler requestStreamHandler;
         Context context;
 
-        AlexaUnitClientBuilder(final String applicationId, final RequestStreamHandler requestStreamHandler) {
-            super(applicationId);
+        AlexaRequestStreamHandlerEndpointBuilder(final RequestStreamHandler requestStreamHandler) {
             this.requestStreamHandler = requestStreamHandler;
         }
 
-        public AlexaUnitClientBuilder<T, G> withContext(final Context context) {
+        public AlexaRequestStreamHandlerEndpointBuilder withContext(final Context context) {
             this.context = context;
             return this;
         }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public T build() {
-            preBuild();
+        public AlexaRequestStreamHandlerEndpoint build() {
             Validate.notNull(requestStreamHandler, "Request stream handler must not be null.");
 
             if (context == null) {
                 context = getContext();
             }
 
-            return (T)new AlexaUnitClient(this);
+            return new AlexaRequestStreamHandlerEndpoint(this);
         }
 
         private Context getContext() {

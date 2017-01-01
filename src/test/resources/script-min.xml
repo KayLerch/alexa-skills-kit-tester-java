@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<test xmlns="http://klerch.io/alexa/skills-kit-tester"
+<script xmlns="http://klerch.io/alexa/skills-kit-tester"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://klerch.io/alexa/skills-kit-tester testScript.xsd">
     <configuration>
-        <endpoint>myLambdaFunctionName</endpoint>
+        <endpoint type="Lambda">myLambdaFunctionName</endpoint>
         <locale>de-DE</locale>
         <application id="myApplicationId" />
     </configuration>
     <sessions>
         <session />
     </sessions>
-</test>
+</script>

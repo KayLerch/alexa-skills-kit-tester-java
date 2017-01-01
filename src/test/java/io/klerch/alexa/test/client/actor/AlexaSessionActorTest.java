@@ -2,16 +2,19 @@ package io.klerch.alexa.test.client.actor;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
 import io.klerch.alexa.test.AssetFactory;
+import io.klerch.alexa.test.client.AlexaClient;
 import io.klerch.alexa.test.client.AlexaSessionActor;
-import io.klerch.alexa.test.client.AlexaUnitClient;
+import io.klerch.alexa.test.client.endpoint.AlexaRequestStreamHandlerEndpoint;
+import io.klerch.alexa.test.client.endpoint.samples.AlexaRequestStreamHandler;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class AlexaSessionActorTest {
-    private AlexaSessionActor givenActor() {
+    private AlexaSessionActor givenActor() throws Exception {
         final SpeechletResponseEnvelope envelope = AssetFactory.givenResponseWithSsmlOutputSpeech();
-        final AlexaUnitClient client = AlexaUnitClient.create("appId", AssetFactory.givenRequestStreamHandlerThatReturns(envelope)).build();
+        final AlexaRequestStreamHandlerEndpoint endpoint = AlexaRequestStreamHandlerEndpoint.create(AssetFactory.givenRequestStreamHandlerThatReturns(envelope)).build();
+        final AlexaClient client = AlexaClient.create(endpoint, "appId").build();
         return new AlexaSessionActor(client);
     }
 

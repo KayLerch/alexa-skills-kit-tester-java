@@ -13,13 +13,17 @@ import com.amazon.speech.speechlet.interfaces.audioplayer.directive.ClearQueueDi
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.PlayDirective;
 import com.amazon.speech.speechlet.interfaces.audioplayer.directive.StopDirective;
 import com.amazon.speech.ui.*;
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazonaws.services.lambda.runtime.*;
 import io.klerch.alexa.test.client.AlexaSessionActor;
 import io.klerch.alexa.test.client.AlexaClient;
-import io.klerch.alexa.test.client.AlexaUnitClient;
+import io.klerch.alexa.test.client.endpoint.*;
+import org.joox.Match;
+import org.w3c.dom.Document;
 
 import java.util.Collections;
 import java.util.Map;
+
+import static org.joox.JOOX.$;
 
 public class AssetFactory {
     public static final String DEFAULT_APP_ID = "app-id";
@@ -172,20 +176,16 @@ public class AssetFactory {
         return envelope;
     }
 
-    public static AlexaUnitClient givenClient() {
-        return AlexaUnitClient.create(DEFAULT_APP_ID, (inputStream, outputStream, context) -> {}).build();
+    public static AlexaClient givenClient() throws Exception {
+        return AlexaClient.create(givenRequestStreamHandlerEndpoint(), DEFAULT_APP_ID).build();
     }
 
-    public static AlexaUnitClient givenClient(final String appId) {
-        return AlexaUnitClient.create(appId, (inputStream, outputStream, context) -> {}).build();
+    public static AlexaClient givenClient(final String appId) throws Exception {
+        return AlexaClient.create(givenRequestStreamHandlerEndpoint(), appId).build();
     }
 
-    public static AlexaSessionActor givenActor() {
+    public static AlexaSessionActor givenActor() throws Exception {
         return new AlexaSessionActor(givenClient());
-    }
-
-    public static AlexaSessionActor givenActor(final String appId) {
-        return new AlexaSessionActor(givenClient(appId));
     }
 
     public static RequestStreamHandler givenRequestStreamHandlerThatReturns(final SpeechletResponseEnvelope response) {
@@ -229,5 +229,68 @@ public class AssetFactory {
             response.setSessionAttributes(attributes);
             response.toJson(outputStream);
         };
+    }
+
+    public static AlexaLambdaEndpoint givenLambdaEndpoint() throws Exception {
+        return (AlexaLambdaEndpoint)givenEndpointMatch("script-lambdaFunction.xml");
+    }
+
+    public static AlexaRequestStreamHandlerEndpoint givenRequestStreamHandlerEndpoint() throws Exception {
+        return (AlexaRequestStreamHandlerEndpoint)givenEndpointMatch("script-requestStreamHandler.xml");
+    }
+
+    public static Context givenContext() {
+        return new Context() {
+            @Override
+            public String getAwsRequestId() {
+                return null;
+            }
+
+            @Override
+            public String getLogGroupName() {
+                return null;
+            }
+
+            @Override
+            public String getLogStreamName() {
+                return null;
+            }
+
+            @Override
+            public String getFunctionName() {
+                return null;
+            }
+
+            @Override
+            public CognitoIdentity getIdentity() {
+                return null;
+            }
+
+            @Override
+            public ClientContext getClientContext() {
+                return null;
+            }
+
+            @Override
+            public int getRemainingTimeInMillis() {
+                return 0;
+            }
+
+            @Override
+            public int getMemoryLimitInMB() {
+                return 0;
+            }
+
+            @Override
+            public LambdaLogger getLogger() {
+                return null;
+            }
+        };
+    }
+
+    private static AlexaEndpoint givenEndpointMatch(final String scriptFile) throws Exception {
+        final Document doc = $(AssetFactory.class.getClassLoader().getResourceAsStream(scriptFile)).document();
+        final Match mEndpoint = $(doc).first().find("configuration").find("endpoint");
+        return AlexaEndpointFactory.createEndpoint(mEndpoint);
     }
 }
