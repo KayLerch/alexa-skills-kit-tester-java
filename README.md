@@ -6,7 +6,7 @@
 # Alexa Skills Kit Testing Framework
 
 This framework lets you script and execute complex conversations with your Alexa skills. Scripts
-are expressed in either Java-Code or XML and can be used to automate functional tests or to drive
+are expressed in either Java-Code or XML and can be used to automate functional tests or to perform
 test-driven development of Alexa skills.
  
 ### Alexa-Client 
