@@ -55,9 +55,9 @@ you script won't continue to run. A failed assertion lets the whole test fail an
 An asset is an element inside the skill response. This can be the output-speech, a reprompt, card, directive or session attribute.
 Those assets have values you can validate with the _assert_-methods as well. 
 
-##### Conditionals
+##### Conditional Paths
 A condition really much does the same as an _assertion_ but with one difference. It only validates without
-throwing an exception. Therefor, you can use _conditionals_ to make decisions while having the conversation and
+throwing an exception. Therefor, you can use _conditional paths_ to make decisions while having the conversation and
 go into different directions the same way a user would do when using your skill. That said, scripts not only
 follow static routes but can also have variable paths - where all of them will be valid unless none of them
 fails one of its subsequent assertions. Each _assertion_ has an equivalent _conditional_-method.
@@ -75,7 +75,7 @@ fails one of its subsequent assertions. Each _assertion_ has an equivalent _cond
             <launch> <!-- ACTION -->
                 <assertTrue assertion="HasCardIsSimple"/> <!-- ASSERTION -->
                 <assertMatches asset="OutputSpeechPlainText" value="Hello.*"/> <!-- ASSERTION -->
-                <sessionStateEquals key="knownUser" value="true"> <!-- CONDITIONAL -->
+                <sessionStateEquals key="knownUser" value="true"> <!-- CONDITIONAL PATH -->
                     <intent name="myIntent"> <!-- ACTION -->
                         <request>
                             <slots><slot key="mySlot" value="someValue" /></slots>
@@ -84,7 +84,7 @@ fails one of its subsequent assertions. Each _assertion_ has an equivalent _cond
                         <assertFalse assertion="HasDirectiveIsPlay"/> <!-- ASSERTION -->
                     </intent>
                 </sessionStateEquals>
-                <sessionStateEquals key="knownUser" value="false"> <!-- CONDITIONAL -->
+                <sessionStateEquals key="knownUser" value="false"> <!-- CONDITIONAL PATH -->
                     <help> <!-- ACTION -->
                         <assertTrue assertion="HasOutputSpeechIsSsml"/> <!-- ASSERTION -->
                         <assertSessionEnded /> <!-- ASSERTION -->
