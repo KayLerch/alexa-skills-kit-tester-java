@@ -2,29 +2,36 @@ package io.klerch.alexa.test.client;
 
 import com.amazon.speech.json.SpeechletRequestEnvelope;
 import com.amazon.speech.slu.Slot;
+import com.amazon.speech.speechlet.Context;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
+import com.amazon.speech.speechlet.interfaces.system.SystemState;
 import io.klerch.alexa.test.asset.AlexaAssertion;
 import io.klerch.alexa.test.asset.AlexaAsset;
+import io.klerch.alexa.test.client.endpoint.AlexaSimulationApiEndpoint;
 import io.klerch.alexa.test.request.*;
 import io.klerch.alexa.test.response.AlexaResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.joox.Match;
 import org.w3c.dom.Element;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static org.joox.JOOX.$;
+import static org.joox.JOOX.ids;
+import static org.joox.JOOX.tag;
 
 /**
  * The session actor manages a conversation within a single Alexa session by
  * persisting session state.
  */
-public class AlexaSessionActor extends AlexaActor {
+public class AlexaSession extends AlexaActor {
     private final static Logger log = Logger.getLogger(AlexaClient.class);
     final Session session;
     boolean sessionClosed;
@@ -33,21 +40,24 @@ public class AlexaSessionActor extends AlexaActor {
         return String.format("SessionId.%s", UUID.randomUUID());
     }
 
-    public AlexaSessionActor(final AlexaClient client) {
+    public AlexaSession(final AlexaClient client, final Session session) {
         super(client);
         this.sessionClosed = false;
-        this.session = Session.builder()
+        this.session = session;
+        // if debug flag is set add it to the session attributes
+        this.getClient().getDebugFlagSessionAttributeName().ifPresent(name -> {
+            this.session.getAttributes().putIfAbsent(name, true);
+        });
+    }
+
+    public AlexaSession(final AlexaClient client) {
+        this(client, Session.builder()
                 .withApplication(client.getApplication())
                 .withUser(client.getUser())
                 .withIsNew(false)
                 .withSessionId(generateSessionId())
                 .withAttributes(new LinkedHashMap<>())
-                .build();
-
-        // if debug flag is set add it to the session attributes
-        this.getClient().getDebugFlagSessionAttributeName().ifPresent(name -> {
-            this.session.getAttributes().putIfAbsent(name, true);
-        });
+                .build());
 
         log.info(String.format("\n[START] session start request with sessionId '%s' ...", this.session.getSessionId()));
         client.fire(new AlexaSessionStartedRequest(this));
@@ -79,20 +89,29 @@ public class AlexaSessionActor extends AlexaActor {
 
     @Override
     public SpeechletRequestEnvelope envelope(final AlexaRequest request) {
-        // ensure session is ready for another request
-        Validate.isTrue(!sessionClosed, "Session already closed and not ready for another request.");
+        final SystemState systemState = SystemState.builder()
+                .withUser(session.getUser())
+                .withDevice(client.device)
+                .withApiEndpoint(client.apiEndpoint)
+                .withApplication(session.getApplication()).build();
+
+        final Context context = Context.builder().addState(systemState).build();
+
+        // ensure session is ready for another request (make an exception for session ended and launch requests)
+        Validate.isTrue(!sessionClosed || AlexaSessionEndedRequest.class.isInstance(request) || AlexaLaunchRequest.class.isInstance(request), "Session already closed and not ready for another request.");
         return SpeechletRequestEnvelope.builder()
                 .withRequest(request.getSpeechletRequest())
                 .withSession(request instanceof AlexaSessionStartedRequest ? getSessionWithIsNew() : session)
                 .withVersion(AlexaClient.VERSION)
+                .withContext(context)
                 .build();
     }
 
     @Override
     public void exploitResponse(final AlexaResponse response) {
-        if (!response.isEmpty()) {
+        if (!response.isEmpty() && response.getResponseEnvelope() != null && response.getResponseEnvelope().getResponse() != null) {
             // remember session closed
-            sessionClosed = response.getResponseEnvelope().getResponse().getShouldEndSession();
+            sessionClosed = response.getResponseEnvelope().getResponse().getNullableShouldEndSession();
             // apply session attributes for next request
             applySessionAttributes(response.getResponseEnvelope().getSessionAttributes());
         }
@@ -124,8 +143,13 @@ public class AlexaSessionActor extends AlexaActor {
      * @param slots collection of slots
      * @return skill's response
      */
-    public AlexaResponse intent(final String intentName, final Map<String, Slot> slots) {
-        return intent(new AlexaIntentRequest(this, intentName).withSlots(slots));
+    public AlexaResponse intent(final String intentName, final Map<String, Object> slots) {
+        final Map<String, Slot> slots2 = new HashMap<>();
+        slots.forEach((k,v) -> {
+            slots2.putIfAbsent(k, v instanceof Slot ? (Slot)v : Slot.builder().withName(k).withValue(v.toString()).build());
+        });
+
+        return intent(new AlexaIntentRequest(this, intentName).withSlots(slots2));
     }
 
     /**
@@ -139,11 +163,22 @@ public class AlexaSessionActor extends AlexaActor {
     }
 
     private AlexaResponse intent(final AlexaIntentRequest request) {
-        log.info(String.format("\n[START] intent request '%s' ...", request.getIntentName()));
+        log.info(String.format("\n[START] intent request '%1$s' %2$s ...", request.getIntentName(), request.getSlotSummary()));
         final AlexaResponse response = client.fire(request).orElseThrow(() ->
                 new RuntimeException("[ERROR] intent request did not receive a response.")
         );
         log.info(String.format("[DONE] intent request '%1$s' in %2$s ms.", request.getIntentName(), getClient().getLastExecutionMillis()));
+        return response;
+    }
+
+    public AlexaResponse say(final String utterance) {
+        Validate.isTrue(this.getClient().endpoint instanceof AlexaSimulationApiEndpoint, "Utterance requests are only supported by SimulationApi-Endpoints.");
+
+        log.info(String.format("\n[START] utterance request '%s' ...", utterance));
+        final AlexaResponse response = client.fire(new AlexaUtteranceRequest(this), utterance).orElseThrow(() ->
+                new RuntimeException("[ERROR] utterance request did not receive a response.")
+        );
+        log.info(String.format("[DONE] utterance request '%1$s' in %2$s ms.", utterance, getClient().getLastExecutionMillis()));
         return response;
     }
 
@@ -152,6 +187,9 @@ public class AlexaSessionActor extends AlexaActor {
      * @return skill's response
      */
     public AlexaResponse launch() {
+        // reset attributes first
+        this.session.getAttributes().clear();
+
         log.info("\n[START] launch request ...");
         final AlexaResponse response = client.fire(new AlexaLaunchRequest(this)).orElseThrow(() ->
                 new RuntimeException("[ERROR] launch request did not receive a response.")
@@ -282,7 +320,7 @@ public class AlexaSessionActor extends AlexaActor {
      * @param millis milliseconds to sleep
      * @return skill's response
      */
-    public AlexaSessionActor delay(long millis) {
+    public AlexaSession delay(long millis) {
         log.info(String.format("\n[START] wait for %s ms.", millis));
         try {
             Thread.sleep(millis);
@@ -305,35 +343,153 @@ public class AlexaSessionActor extends AlexaActor {
         log.info(String.format("[DONE] request session end with reason '%s'.", reason.name()));
     }
 
-    void executeSession(final Element session) {
-        $(session).children().forEach(processActionInSession);
-        this.endSession();
+    void executeSession(final Object yLaunch) {
+        if (yLaunch instanceof Optional<?>) {
+            ((Optional<?>)yLaunch).ifPresent(launch -> {
+                executeAction((ArrayList)launch);
+            });
+        }
     }
 
-    private Consumer<Element> processActionInSession = request -> {
+    @SuppressWarnings("Unchecked")
+    void executeAction(final ArrayList assets) {
+        final List<String> assertions = new ArrayList<>();
+        final Map<String, Object> params = new HashMap<>();
+        final Map<String, ArrayList> conditions = new HashMap<>();
+        final List<ArrayList> followUps = new ArrayList<>();
+        final AtomicReference<String> intentName = new AtomicReference<>();
+        final AtomicReference<String> utterance = new AtomicReference<>();
+
+        assets.forEach(asset -> {
+            // if asset is not a key-value treat it as an assertion
+            if (asset instanceof String) assertions.add(asset.toString());
+            // if asset is a map it could either be a parameter or a condition with reference
+            else if (asset instanceof Map) {
+                Map<Object, Object> kv = (Map)asset;
+                if (kv.values().stream().allMatch(v -> v instanceof String)) {
+                    kv.forEach((k, v) -> {
+                        if (StringUtils.equalsIgnoreCase(k.toString(), "intent")) {
+                            intentName.set(v.toString());
+                        } else if (StringUtils.equalsIgnoreCase(k.toString(), "utterance")) {
+                            utterance.set(v.toString());
+                        } else {
+                            final String value = v.toString();
+                            // check if value assignment is actually a json expression
+                            if (value.startsWith("$")) {
+                                // try resolve json expression with last response
+                                final String resolvedValue = Optional.ofNullable(client.getLastResponse())
+                                        .map(lr -> lr.get(value).orElse(null))
+                                        .filter(Objects::nonNull)
+                                        .orElseThrow(() -> new RuntimeException(value + " could not be resolved for slot " + k));
+                                params.putIfAbsent(k.toString(), resolvedValue);
+                            } else {
+                                params.putIfAbsent(k.toString(), value);
+                            }
+                        }
+                    });
+                } else if (kv.values().stream().allMatch(v -> v instanceof ArrayList)) {
+                    kv.forEach((k, v) -> {
+                        conditions.putIfAbsent(k.toString(), (ArrayList)v);
+                    });
+                }
+            }
+            else if (asset instanceof ArrayList) {
+                followUps.add((ArrayList)asset);
+            }
+        });
+
+        // fire request
+        final AlexaResponse response =
+                StringUtils.isNotBlank(intentName.get()) ? intent(intentName.get(), params) :
+                        StringUtils.isNotBlank(utterance.get()) ? say(utterance.get()) : launch();
+
+        // go through assertions
+        assertions.forEach(response::assertThat);
+
+        // go through all conditions
+        conditions.forEach((condition, followUp) -> {
+            // if condition met
+            if (response.is(condition)) {
+                executeAction(followUp);
+            }
+        });
+
+        // follow up with standalone anchors
+        followUps.forEach(this::executeAction);
+    }
+
+    Match sessionMatch = null;
+    final Map<String, Integer> goToIterations = new HashMap<>();
+
+     void executeSession(final Element session) {
+        // reset iteration count for gotos
+        goToIterations.clear();
+        // keep in mind root node of session to jump back and forth using gotos
+        this.sessionMatch = $(session);
+        // step by step processing
+        $(session).children().forEach(processAction);
+    }
+
+    final void goTo(final Element goTo) {
+        final String id = Optional.ofNullable(goTo.getAttribute("id")).orElseThrow(() -> new RuntimeException("The id-attribute is missing in the goto-tag."));
+        final int threshold = Optional.ofNullable(goTo.getAttribute("breakoutAfter")).filter(NumberUtils::isNumber).map(Integer::parseInt).orElse(100);
+        final String breakout = goTo.getAttribute("breakoutWith");
+
+        final Integer goToIteration = Optional.ofNullable(goToIterations.putIfAbsent(id, 0)).orElse(0) + 1;
+
+        if (goToIteration > threshold) {
+            if ("exception".equalsIgnoreCase(breakout)) {
+                throw new RuntimeException("[ERROR] Maximum loop count of " + threshold + " reached for goto with id '" + id + "'.");
+            }
+            log.info("[INFO] Break out of goto loop with id " + id + " as maximum turn count of " + threshold + " exceeded.");
+        } else {
+            log.info("[INFO] Goto action with id '" + id + "' (turn: " + goToIteration + ")");
+            goToIterations.put(id, goToIteration);
+            Optional.ofNullable(this.sessionMatch.find(ids(id)).not(tag("goto")))
+                    .filter(Match::isNotEmpty)
+                    .orElseThrow(() -> new RuntimeException("[ERROR] Goto references an action with id '" + id + "' that does not exist as a node in your session with the same id."))
+                    .forEach(processAction);
+        }
+    }
+
+    final Consumer<Element> processAction = request -> {
         final String requestName = request.getLocalName();
         // in case request is a delay, must provide a value as attribute
         Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
         // in case request is a custom intent, must provide a name as attribute
         Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
         // request must match method in actor
-        Validate.notNull(Arrays.stream(AlexaSessionActor.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
+        Validate.isTrue("goto".equals(requestName) || Arrays.stream(AlexaSession.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
 
-        if ("delay".equals(requestName)) {
-            delay(Long.parseLong(request.getAttribute("value")));
-        } else {
-            try {
-                // request the skill with intent
-                final AlexaResponse response = "intent".equals(requestName) ?
-                        intent(request.getAttribute("name"), extractSlots($(request))) :
-                        (AlexaResponse)AlexaSessionActor.class.getMethod(requestName).invoke(this);
-                // validate response
-                validateResponse(response, $(request));
-            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
-                log.error(msg, e);
-                throw new RuntimeException(msg, e);
+        AlexaResponse response = null;
+
+        switch (requestName) {
+            case "delay" : {
+                delay(Long.parseLong(request.getAttribute("value"))); break;
             }
+            case "intent" : {
+                response = intent(request.getAttribute("name"), extractSlots($(request))); break;
+            }
+            case "say" : {
+                response = say(request.getAttribute("utterance")); break;
+            }
+            case "goto" : {
+                goTo(request); break;
+            }
+            default: {
+                try {
+                    response = (AlexaResponse)AlexaSession.class.getMethod(requestName).invoke(this);
+                } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                    final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
+                    log.error(msg, e);
+                    throw new RuntimeException(msg, e);
+                }
+            }
+        }
+
+        if (response != null) {
+            // validate response
+            validateResponse(response, $(request));
         }
     };
 
@@ -345,20 +501,23 @@ public class AlexaSessionActor extends AlexaActor {
         }
 
         mResponse.children().forEach(assertion -> {
-            final String assertionMethod = assertion.getTagName();
+            final String tagName = assertion.getTagName();
             final String assetName = assertion.getAttribute("asset");
+            final String condition = assertion.getAttribute("condition");
             final String assertionName = assertion.getAttribute("assertion");
             final String key = assertion.getAttribute("key");
             final String value = assertion.getAttribute("value");
+            final String method = "if".equals(tagName) ? "if" + StringUtils.capitalize(condition) : tagName;
 
             // skip request node which is at the same level as all the assertion-tags
-            if ("request".equals(assertionMethod)) return;
+            if ("request".equals(method)) return;
 
             //Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
-            Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(assertionMethod)), "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
+            Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(method)), "[ERROR] Invalid assertion method '%s' in your script-file.", method);
 
             Arrays.stream(response.getClass().getMethods())
-                    .filter(m -> m.getName().equals(assertionMethod))
+                    .filter(m -> m.getName().equals(method))
+                    .filter(m -> Arrays.stream(m.getParameterTypes()).noneMatch(pt -> pt.isAssignableFrom(Consumer.class)))
                     .findFirst()
                     .ifPresent(m -> {
                         final List<Object> parameters = new ArrayList<>();
@@ -386,7 +545,7 @@ public class AlexaSessionActor extends AlexaActor {
                             // result only for conditional methods and those are always booleans
                             if (result != null && Boolean.parseBoolean(result.toString())) {
                                 // in that case a conditional was true. The body should contain actions to perform (recursion starts)
-                                $(assertion).children().forEach(processActionInSession);
+                                $(assertion).children().forEach(processAction);
                             }
                         } catch (final InvocationTargetException | IllegalAccessException e) {
                             throw new RuntimeException(e);

@@ -40,7 +40,7 @@ public class AlexaLambdaEndpoint implements AlexaEndpoint {
         log.debug(String.format("->[INFO] with request payload '%s'.", payload));
         final InvokeResult invokeResult = lambdaClient.invoke(invokeRequest);
         return invocationType.equals(InvocationType.RequestResponse) ?
-                Optional.of(new AlexaResponse(request, invokeResult.getPayload().array())) : Optional.empty();
+                Optional.of(new AlexaResponse(request, payload, new String(invokeResult.getPayload().array()))) : Optional.empty();
     }
 
     public static AlexaLambdaEndpointBuilder create(final String lambdaFunctionName) {

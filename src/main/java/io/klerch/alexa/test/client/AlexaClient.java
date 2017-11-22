@@ -1,55 +1,78 @@
 package io.klerch.alexa.test.client;
 
 import com.amazon.speech.json.SpeechletRequestEnvelope;
-import com.amazon.speech.speechlet.Application;
-import com.amazon.speech.speechlet.User;
+import com.amazon.speech.json.SpeechletRequestModule;
+import com.amazon.speech.speechlet.*;
+import com.amazon.speech.speechlet.interfaces.audioplayer.AudioPlayerInterface;
+import com.amazon.speech.speechlet.interfaces.display.DisplayInterface;
 import com.amazonaws.util.StringUtils;
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.klerch.alexa.test.client.endpoint.AlexaEndpoint;
 import io.klerch.alexa.test.client.endpoint.AlexaEndpointFactory;
 import io.klerch.alexa.test.request.AlexaRequest;
 import io.klerch.alexa.test.response.AlexaResponse;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
-import org.joox.Match;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
-import java.sql.Timestamp;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.joox.JOOX.$;
+import static io.klerch.alexa.test.client.AlexaClient.API_ENDPOINT.EU;
+import static io.klerch.alexa.test.client.AlexaClient.API_ENDPOINT.NA;
+
 
 public class AlexaClient {
     private final static Logger log = Logger.getLogger(AlexaClient.class);
+    private final static ObjectMapper mapper = new ObjectMapper();
     public static final String VERSION = "1.0";
     final AlexaEndpoint endpoint;
+    private AlexaResponse lastResponse;
+    final String apiEndpoint;
     final long millisFromCurrentDate;
     long lastExecutionTimeMillis;
     final Locale locale;
+    final Device device;
     final Application application;
     final User user;
     final Optional<String> debugFlagSessionAttributeName;
-    private final Match mSessions;
+    private final Object yLaunch;
+
+    private static Map<API_ENDPOINT, String> apiEndpoints = new HashMap<>();
+
+    static {
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper.enable(SerializationFeature.WRITE_NULL_MAP_VALUES);
+        mapper.registerModule(new SpeechletRequestModule());
+
+        apiEndpoints.putIfAbsent(NA, "https://api.amazonalexa.com/");
+        apiEndpoints.putIfAbsent(EU, "https://api.eu.amazonalexa.com/");
+    }
+
+    public enum API_ENDPOINT {
+        NA, EU
+    }
 
     AlexaClient(final AlexaClientBuilder builder) {
         this.millisFromCurrentDate = builder.timestamp.getTime() - new Date().getTime();
         this.locale = builder.locale;
+        apiEndpoint = apiEndpoints.getOrDefault(builder.apiEndpoint, apiEndpoints.get(NA));
         this.application = new Application(builder.applicationId);
         this.user = User.builder().withUserId(builder.uid).withAccessToken(builder.accessToken).build();
+        this.device = builder.device;
         this.debugFlagSessionAttributeName = StringUtils.isNullOrEmpty(builder.debugFlagSessionAttributeName) ? Optional.empty() : Optional.of(builder.debugFlagSessionAttributeName);
         this.endpoint = builder.endpoint;
-        this.mSessions = builder.mSessions;
+        this.yLaunch = builder.yLaunch;
+    }
+
+    public AlexaResponse getLastResponse() {
+        return this.lastResponse;
     }
 
     public long getLastExecutionMillis() {
@@ -81,23 +104,29 @@ public class AlexaClient {
     }
 
     Optional<AlexaResponse> fire(final AlexaRequest request) {
-        final SpeechletRequestEnvelope envelope = request.getActor().envelope(request);
+        final SpeechletRequestEnvelope envelope = request.getSession().envelope(request);
         String payload = null;
         try {
-            final ObjectMapper mapper = new ObjectMapper();
             payload = mapper.writeValueAsString(envelope);
         } catch (final JsonProcessingException e) {
             final String msg = String.format("Invalid request format. %s", e.getMessage());
             log.error(String.format("→ [ERROR] %s", msg));
             throw new RuntimeException(msg, e);
         }
+        return fire(request, payload);
+    }
+
+    Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         // ensure payload set
         Validate.notBlank(payload, "Invalid speechlet request contents. Must not be null or empty.");
         // delegate execution to child implementation
         final long startTimestamp = System.currentTimeMillis();
         final Optional<AlexaResponse> response = endpoint.fire(request, payload);
         lastExecutionTimeMillis = System.currentTimeMillis() - startTimestamp;
-        response.ifPresent(request.getActor()::exploitResponse);
+        response.ifPresent(r -> {
+            request.getSession().exploitResponse(r);
+            lastResponse = r;
+        });
         return response;
     }
 
@@ -109,28 +138,18 @@ public class AlexaClient {
         return create(endpoint).withApplicationId(applicationId);
     }
 
-    public static AlexaClientBuilder create(final URI scriptFileUri) throws IOException, SAXException {
-        return create($(scriptFileUri).document());
+    public static AlexaClientBuilder create(final InputStream scriptInputStream) throws IOException {
+        final YamlReader yamlReader = new YamlReader(IOUtils.toString(scriptInputStream));
+        return new AlexaClientBuilder(yamlReader);
     }
 
-    public static AlexaClientBuilder create(final URL scriptFileUrl) throws IOException, SAXException {
-        return create($(scriptFileUrl).document());
+    public static AlexaClientBuilder create(final String resourceFilePath) throws IOException {
+        final InputStream stream = AlexaClient.class.getClassLoader().getResourceAsStream(resourceFilePath);
+        return create(stream);
     }
 
-    public static AlexaClientBuilder create(final InputStream scriptInputStream) throws IOException, SAXException {
-        return create($(scriptInputStream).document());
-    }
-
-    public static AlexaClientBuilder create(final File scriptFile) throws IOException, SAXException {
-        return create($(scriptFile).document());
-    }
-
-    private static AlexaClientBuilder create(final Document document) {
-        return new AlexaClientBuilder(document);
-    }
-
-    public AlexaSessionActor startSession() {
-        return new AlexaSessionActor(this);
+    public AlexaSession startSession() {
+        return new AlexaSession(this);
     }
 
     /**
@@ -139,16 +158,8 @@ public class AlexaClient {
      * nothing as there's no script to read from. In this case use startSession to
      */
     public void startScript() {
-        if (mSessions.isEmpty()) {
-            log.warn("No test-sessions defined in script-file. Nothing is executed in this test-run.");
-            return;
-        }
-
-        mSessions.children().forEach(session -> {
-            final AlexaSessionActor actor = this.startSession();
-            actor.executeSession(session);
-            actor.endSession();
-        });
+        Validate.notNull(yLaunch, "Could not find Launch node. Add this node to the top level of your YAML script and use it as an entry point for your conversation path.");
+        startSession().executeSession(yLaunch);
     }
 
     public Locale getLocale() {
@@ -157,63 +168,70 @@ public class AlexaClient {
 
     public static class AlexaClientBuilder {
         AlexaEndpoint endpoint;
-        Match mSessions;
+        Object yLaunch;
         String applicationId;
+        AlexaClient.API_ENDPOINT apiEndpoint;
         Locale locale;
-        String uid;
-        String accessToken;
+        private String uid;
+        private String accessToken;
         String debugFlagSessionAttributeName;
+        String deviceId;
+        Device device;
+        List<Interface> interfaces = new ArrayList<>();
         Date timestamp;
 
         AlexaClientBuilder(final AlexaEndpoint endpoint) {
             this.endpoint = endpoint;
         }
 
-        AlexaClientBuilder(final Document document) {
-            // root
-            final Match mTest = $(document).first();
-            Validate.isTrue(mTest.isNotEmpty(), "Root node 'test' not found.");
-
-            // configuration
-            final Match mConfig = mTest.find("configuration");
-            Validate.isTrue(mConfig.isNotEmpty(), "Node 'configuration' not found.");
-
-            final Match mEndpoint = mConfig.find("endpoint");
-            Validate.isTrue(mEndpoint.isNotEmpty(), "Node 'endpoint' not found.");
-
-            this.endpoint = AlexaEndpointFactory.createEndpoint(mEndpoint);
-
-            mSessions = mTest.find("sessions");
-
-            final Match mApplication = mConfig.find("application");
-            if (mApplication.isNotEmpty()) {
-                withApplicationId(mApplication.id());
+        AlexaClientBuilder(final YamlReader root) {
+            HashMap<Object, Object> yRoot = null;
+            try {
+                yRoot = (HashMap)root.read();
+            } catch (YamlException e) {
+                log.error("Could not read YAML script file", e);
             }
 
-            final Match mLocale = mConfig.find("locale");
-            if (mLocale.isNotEmpty()) {
-                withLocale(mLocale.text());
-            }
+            final HashMap yConfig = Optional.ofNullable(yRoot.get("configuration")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).orElseThrow(() -> new RuntimeException("configuration node is missing or empty."));
+            final HashMap yEndpoint = Optional.ofNullable(yConfig.get("endpoint")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).orElseThrow(() -> new RuntimeException("endpoint node is missing or empty."));
 
-            final Match mDebugFlag = mConfig.find("debugFlagSessionAttribute");
-            if (mDebugFlag.isNotEmpty()) {
-                withDebugFlagSessionAttribute(mDebugFlag.text());
-            }
+            this.endpoint = AlexaEndpointFactory.createEndpoint(yEndpoint);
+            this.applicationId = Optional.ofNullable(yEndpoint.get("skillId")).filter(o -> o instanceof String).map(Object::toString).orElse(System.getenv("skillId"));
+            this.locale = Locale.forLanguageTag(Optional.ofNullable(yEndpoint.get("locale")).filter(o -> o instanceof String).map(Object::toString).orElse("en-US"));
+            this.apiEndpoint = Optional.ofNullable(yEndpoint.get("region")).filter(o -> o instanceof String).map(o -> AlexaClient.API_ENDPOINT.valueOf(o.toString())).orElse(AlexaClient.API_ENDPOINT.NA);
+            this.debugFlagSessionAttributeName = Optional.ofNullable(yConfig.get("debugFlagSessionAttributeName")).filter(o -> o instanceof String).map(Object::toString).orElse(null);
 
-            final Match mTimestamp = mConfig.find("timestamp");
-            if (mTimestamp.isNotEmpty()) {
-                withTimestamp(new Date(mTimestamp.text(Timestamp.class).getTime()));
-            }
+            Optional.ofNullable(yConfig.get("device")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).ifPresent(yDevice -> {
+                this.deviceId = Optional.ofNullable(yDevice.get("id")).map(Object::toString).orElse(System.getenv("skillDeviceId"));
 
-            final Match mUser = mConfig.find("user");
-            if (mUser.isNotEmpty()) {
-                withUserId(mUser.id());
-                withAccessToken(mUser.attr("accessToken"));
-            }
+                Optional.ofNullable(yDevice.get("supportedInterfaces")).filter(o -> o instanceof ArrayList).map(o -> (ArrayList)o).ifPresent(yInterfaces -> {
+                    yInterfaces.forEach(yInterface -> {
+                        final String interfaceName = yInterface.toString();
+                        if ("Display".equals(interfaceName)) {
+                            withSupportedInterface(DisplayInterface.builder().build());
+                        }
+                        if ("AudioPlayer".equals(interfaceName)) {
+                            withSupportedInterface(AudioPlayerInterface.builder().build());
+                        }
+                    });
+                });
+            });
+
+            Optional.ofNullable(yConfig.get("user")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).ifPresent(yUser -> {
+                this.uid = Optional.ofNullable(yUser.get("id")).map(Object::toString).orElse(System.getenv("skillUserId"));
+                this.accessToken = Optional.ofNullable(yUser.get("accessToken")).map(Object::toString).orElse(System.getenv("skillAccessToken"));
+            });
+
+            yLaunch = Optional.ofNullable(yRoot.get("Launch")).orElseThrow(() -> new RuntimeException("There's no 'Launch'-node provided in the YAML script. Create a top-level node named 'Launch' as it is the entry point for the conversation you'd like to simulate."));
         }
 
         public AlexaClientBuilder withEndpoint(final AlexaEndpoint endpoint) {
             this.endpoint = endpoint;
+            return this;
+        }
+
+        public AlexaClientBuilder withApiEndpoint(final AlexaClient.API_ENDPOINT apiEndpoint) {
+            this.apiEndpoint = apiEndpoint;
             return this;
         }
 
@@ -227,8 +245,32 @@ public class AlexaClient {
             return this;
         }
 
+        public AlexaClientBuilder withDeviceId(final String deviceId) {
+            this.deviceId = deviceId;
+            return this;
+        }
+
+        public AlexaClientBuilder withDeviceIdRandomized() {
+            this.deviceId = UUID.randomUUID().toString();
+            return this;
+        }
+
+        public AlexaClientBuilder withSupportedInterface(final Interface supportedInterface) {
+            if (!interfaces.contains(supportedInterface)) {
+                interfaces.add(supportedInterface);
+            }
+            return this;
+        }
+
+        public AlexaClientBuilder withDevice(final Device device) {
+            this.device = device;
+            return this;
+        }
+
         public AlexaClientBuilder withLocale(final String languageTag) {
-            this.locale = Locale.forLanguageTag(languageTag);
+            if (!StringUtils.isNullOrEmpty(languageTag)) {
+                this.locale = Locale.forLanguageTag(languageTag);
+            }
             return this;
         }
 
@@ -252,7 +294,7 @@ public class AlexaClient {
             return this;
         }
 
-        public AlexaClient build() {
+        void preBuild() {
             Validate.notNull(endpoint, "Endpoint must not be null.");
 
             if (StringUtils.isNullOrEmpty(applicationId)) {
@@ -269,6 +311,21 @@ public class AlexaClient {
                 timestamp = new Date();
             }
 
+            if (device == null) {
+                SupportedInterfaces supportedInterfaces = null;
+                if (!interfaces.isEmpty()) {
+                    final SupportedInterfaces.Builder supportedInterfacesBuilder = SupportedInterfaces.builder();
+                    interfaces.forEach(supportedInterfacesBuilder::addSupportedInterface);
+                    supportedInterfaces = supportedInterfacesBuilder.build();
+                } else {
+                    supportedInterfaces = SupportedInterfaces.builder().build();
+                }
+                device = Device.builder().withSupportedInterfaces(supportedInterfaces).withDeviceId(deviceId).build();
+            }
+        }
+
+        public AlexaClient build() {
+            preBuild();
             return new AlexaClient(this);
         }
     }

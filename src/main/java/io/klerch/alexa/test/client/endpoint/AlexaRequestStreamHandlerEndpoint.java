@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Optional;
 
 public class AlexaRequestStreamHandlerEndpoint implements AlexaEndpoint {
@@ -43,11 +44,14 @@ public class AlexaRequestStreamHandlerEndpoint implements AlexaEndpoint {
             throw new RuntimeException(msg, e);
         }
         return request.expectsResponse() ?
-                Optional.of(new AlexaResponse(request, outputStream.toByteArray())) : Optional.empty();
+                Optional.of(new AlexaResponse(request, payload, new String(outputStream.toByteArray()))) : Optional.empty();
     }
 
-    static AlexaRequestStreamHandlerEndpointBuilder create(final String requestStreamHandlerClass) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        return create(Class.forName(requestStreamHandlerClass).asSubclass(RequestStreamHandler.class));
+    static AlexaRequestStreamHandlerEndpointBuilder create(final HashMap<Object, Object> endpointConfiguration) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        Validate.notEmpty(endpointConfiguration, "Endpoint configuration must not be empty. At least the class-attribute is necessary for the RequestStreamHandler.");
+        Validate.isTrue(endpointConfiguration.containsKey("class"), "class-attribute is missing in your Endpoint configuration for the RequestStreamHandler.");
+
+        return create(Class.forName(endpointConfiguration.get("class").toString()).asSubclass(RequestStreamHandler.class));
     }
 
     public static <T extends RequestStreamHandler> AlexaRequestStreamHandlerEndpointBuilder create(final Class<T> clazz) throws IllegalAccessException, InstantiationException {

@@ -2,10 +2,10 @@ package io.klerch.alexa.test.request;
 
 import com.amazon.speech.speechlet.SessionStartedRequest;
 import com.amazon.speech.speechlet.SpeechletRequest;
-import io.klerch.alexa.test.client.AlexaSessionActor;
+import io.klerch.alexa.test.client.AlexaSession;
 
 public class AlexaSessionStartedRequest extends AlexaRequest {
-    public AlexaSessionStartedRequest(final AlexaSessionActor actor) {
+    public AlexaSessionStartedRequest(final AlexaSession actor) {
         super(actor);
     }
 
@@ -17,8 +17,8 @@ public class AlexaSessionStartedRequest extends AlexaRequest {
     @Override
     public SpeechletRequest getSpeechletRequest() {
         return SessionStartedRequest.builder()
-                .withLocale(actor.getClient().getLocale())
-                .withTimestamp(actor.getClient().getCurrentTimestamp())
+                .withLocale(session.getClient().getLocale())
+                .withTimestamp(session.getClient().getCurrentTimestamp())
                 .withRequestId(generateRequestId())
                 .build();
     }

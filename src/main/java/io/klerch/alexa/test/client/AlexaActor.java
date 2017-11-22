@@ -1,7 +1,6 @@
 package io.klerch.alexa.test.client;
 
 import com.amazon.speech.json.SpeechletRequestEnvelope;
-import io.klerch.alexa.test.client.AlexaClient;
 import io.klerch.alexa.test.request.AlexaRequest;
 import io.klerch.alexa.test.response.AlexaResponse;
 

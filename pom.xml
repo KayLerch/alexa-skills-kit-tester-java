@@ -6,7 +6,7 @@
 
     <groupId>io.klerch</groupId>
     <artifactId>alexa-skills-kit-tester-java</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Alexa Skills Kit Tester for Java</name>
@@ -55,12 +55,12 @@
     <properties>
         <maven.surefire.failsafe.version>2.16</maven.surefire.failsafe.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <aws.version>1.11.63</aws.version>
+        <aws.version>1.11.218</aws.version>
         <aws.lambda.version>1.1.0</aws.lambda.version>
         <aws.log4j.version>1.0.0</aws.log4j.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <alexa-skillskit-version>1.2</alexa-skillskit-version>
+        <alexa-skillskit-version>1.6.0</alexa-skillskit-version>
         <sonar-jacoco-listeners.version>3.8</sonar-jacoco-listeners.version>
         <sonar.junit.reportsPath>${project.basedir}/target/surefire-reports</sonar.junit.reportsPath>
         <sonar.jacoco.itReportPath>${project.basedir}/target/jacoco-it.exec</sonar.jacoco.itReportPath>
@@ -85,14 +85,21 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <configuration>
+                    <createDependencyReducedPom>false</createDependencyReducedPom>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>io.klerch.alexa.test.Console</mainClass>
+                        </transformer>
+                    </transformers>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
+                        <phase>package</phase>
                         <goals>
-                            <goal>sign</goal>
+                            <goal>shade</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -149,7 +156,7 @@
                     </execution>
                     <execution>
                         <id>jacoco-site</id>
-                        <phase>verify</phase>
+                        <phase>site</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
@@ -205,9 +212,29 @@
             <version>1.0.0</version>
         </dependency>
         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>${aws.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.jooq</groupId>
             <artifactId>joox</artifactId>
-            <version>1.4.0</version>
+            <version>1.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware.yamlbeans</groupId>
+            <artifactId>yamlbeans</artifactId>
+            <version>1.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

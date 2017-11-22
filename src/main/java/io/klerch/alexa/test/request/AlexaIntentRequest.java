@@ -4,21 +4,27 @@ import com.amazon.speech.slu.Intent;
 import com.amazon.speech.slu.Slot;
 import com.amazon.speech.speechlet.CoreSpeechletRequest;
 import com.amazon.speech.speechlet.IntentRequest;
-import io.klerch.alexa.test.client.AlexaSessionActor;
+import io.klerch.alexa.test.client.AlexaSession;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AlexaIntentRequest extends AlexaRequest {
     private final String intentName;
     private final Map<String, Slot> slots = new HashMap<>();
 
-    public AlexaIntentRequest(final AlexaSessionActor actor, final String intentName) {
+    public AlexaIntentRequest(final AlexaSession actor, final String intentName) {
         super(actor);
         this.intentName = intentName;
     }
 
     public String getIntentName() {
         return this.intentName;
+    }
+
+    public String getSlotSummary() {
+        final List<String> slotValues = slots.values().stream().map(slot -> slot.getName() + ": " + slot.getValue()).collect(Collectors.toList());
+        return slotValues.isEmpty() ? "" : "{ " + String.join(", ", slotValues) + " }";
     }
 
     @Override
@@ -51,10 +57,10 @@ public class AlexaIntentRequest extends AlexaRequest {
                 .withSlots(slots)
                 .build();
         return IntentRequest.builder()
-                .withLocale(actor.getClient().getLocale())
+                .withLocale(session.getClient().getLocale())
                 .withRequestId(generateRequestId())
                 .withIntent(intent)
-                .withTimestamp(actor.getClient().getCurrentTimestamp())
+                .withTimestamp(session.getClient().getCurrentTimestamp())
                 .build();
     }
 }

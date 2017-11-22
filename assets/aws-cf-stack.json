@@ -1,0 +1,110 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Description": "Stack creates an S3 Bucket for test scripts and a Lambda function with the Skill test client.",
+
+  "Parameters": {
+    "lwaClientId": {
+      "Description": "Login With Amazon - Client Id",
+      "Type": "String",
+      "MinLength": "1",
+      "ConstraintDescription": "must contain a valid client id."
+    },
+    "lwaClientSecret": {
+      "Description": "Login With Amazon - Client Secret",
+      "Type": "String",
+      "MinLength": "1",
+      "ConstraintDescription": "must contain a valid client secret."
+    },
+    "lwaRefreshToken": {
+      "Description": "Login With Amazon - Refresh token",
+      "Type": "String",
+      "MinLength": "1",
+      "ConstraintDescription": "must contain a valid refresh token."
+    }
+  },
+  "Resources": {
+    "TestScriptBucket" : {
+      "Type" : "AWS::S3::Bucket",
+      "Properties" : {
+      }
+    },
+    "TestClientLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": "io.klerch.alexa.test",
+          "S3Key": "alexa-skills-kit-tester-java-0.2.0.jar"
+        },
+        "Environment" : {
+          "Variables" : {
+            "s3Bucket" : { "Ref" : "TestScriptBucket" },
+            "s3Path" : "",
+            "lwaClientId" : { "Ref" : "lwaClientId" },
+            "lwaClientSecret" : { "Ref" : "lwaClientSecret" },
+            "lwaRefreshToken" : { "Ref" : "lwaRefreshToken" }
+          }
+        },
+        "FunctionName": "reinvent-alx315-test-client",
+        "Handler": "io.klerch.alexa.test.Lambda",
+        "MemorySize": "1024",
+        "Role": { "Fn::GetAtt": [ "TestClientExecutionRole", "Arn" ] },
+        "Runtime": "java8",
+        "Timeout": "300"
+      }
+    },
+    "TestClientExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "lambda.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "reinvent-alx315-test-client-s3-policy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:*"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "LambdaName": {
+      "Value": { "Ref": "TestClientLambda" },
+      "Description": "The Lambda function"
+    },
+    "S3Bucket": {
+      "Value": { "Ref": "TestScriptBucket" },
+      "Description": "Upload your YAML script files into this S3 bucket. All scripts in this bucket will be executed by the Lambda function."
+    }
+  }
+}
