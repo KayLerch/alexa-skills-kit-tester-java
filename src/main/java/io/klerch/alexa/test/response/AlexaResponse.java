@@ -6,16 +6,12 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import io.klerch.alexa.test.client.AlexaSession;
-import io.klerch.alexa.test.asset.AlexaAssertion;
-import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.request.AlexaRequest;
 import net.minidev.json.JSONArray;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -109,11 +105,36 @@ public class AlexaResponse {
     /**
      * Validates a custom json-path expression
      * throws an IllegalArgumentException in the expression does not return an element
-     * @param jsonPathExpression a json-path expression like "?(@.field == 2)"
+     * @param jsonPathExpression a json-path expression
      * @return this response
      */
     public AlexaResponse assertThat(final String jsonPathExpression) {
         return validate(is(jsonPathExpression), "JSON path expression " + jsonPathExpression);
+    }
+
+    public AlexaResponse assertTrue(final String jsonPathExpression) {
+        return assertThat(jsonPathExpression + " == true");
+    }
+
+    public AlexaResponse assertFalse(final String jsonPathExpression) {
+        return assertThat(jsonPathExpression + " == false");
+    }
+
+    public AlexaResponse assertExists(final String jsonPathExpression) {
+        return assertThat(jsonPathExpression);
+    }
+
+    public AlexaResponse assertNotExists(final String jsonPathExpression) {
+        return assertExists("!(" + jsonPathExpression + ")");
+    }
+
+    public AlexaResponse assertEquals(final String jsonPathExpression, final Object o) {
+        final String s = o instanceof String ? "'" + o + "'" : o.toString();
+        return assertThat(jsonPathExpression + " == " + s);
+    }
+
+    public AlexaResponse assertContains(final String jsonPathExpression, final String s) {
+        return assertThat(jsonPathExpression + " =~ /.*" + s + ".*/i");
     }
 
     /**
@@ -127,17 +148,20 @@ public class AlexaResponse {
 
     /**
      * Validates a custom json-path expression
-     * @param jsonPathExpression a json-path expression like "?(@.field == 2)"
+     * @param jsonPathExpression a json-path expression
      * @return True, if expression returns an element
      */
     public boolean is(String jsonPathExpression) {
         final String conditionalText = String.format("%1$s is TRUE.", jsonPathExpression);
-
+        // turn simplified into valid JSONPath expression
         if (!jsonPathExpression.startsWith("?(@.")) {
             jsonPathExpression = "?(@." + jsonPathExpression + ")";
         }
+        // wrap validation expression
         final String jsonPath = "$.response[" + jsonPathExpression + "]";
+        // wrap response payload
         final Object o = JsonPath.using(config).parse("{ \"response\" : [ " + responsePayload + " ]}").read(jsonPath);
+        // validate expression
         return result(o != null && o instanceof JSONArray && !((JSONArray)o).isEmpty(), conditionalText);
     }
 
@@ -155,540 +179,66 @@ public class AlexaResponse {
     }
 
     /**
-     * Validates the given assertion. It
-     * throws an IllegalArgumentException in case the assertion is not true.
-     * @param assertion The assertion
-     * @return True, if assertion is true
-     */
-    public AlexaResponse assertTrue(final AlexaAssertion assertion){
-        final String assertionText = String.format("%1$s is TRUE.", assertion.name());
-        return validate(ifTrue(assertion), assertionText);
-    }
-
-    /**
-     * Validates the given assertion.
-     * @param assertion The assertion
-     * @return True, if assertion is true
-     */
-    public boolean ifTrue(final AlexaAssertion assertion) {
-        final String conditionalText = String.format("%1$s is TRUE.", assertion.name());
-        return result(assertion.isTrue(envelope), conditionalText);
-    }
-
-    /**
-     * Validates the given assertion.
-     * @param assertion The assertion
+     * Validates a custom predicate executed against the response envelope.
+     * @param jsonPathExpression the response envelope of the request
      * @param followUp code-block executes when condition is true
      * @return this response
      */
-    public AlexaResponse ifTrue(final AlexaAssertion assertion, final Consumer<AlexaSession> followUp) {
-        if (ifTrue(assertion)) {
+    public AlexaResponse ifIs(final String jsonPathExpression, final Consumer<AlexaSession> followUp) {
+        if (is(jsonPathExpression)) {
             followUp.accept(request.getSession());
         }
         return this;
     }
 
-    /**
-     * Validates the given assertion. It
-     * throws an IllegalArgumentException in case the assertion is not false.
-     * @param assertion The assertion
-     * @return this response
-     */
-    public AlexaResponse assertFalse(final AlexaAssertion assertion){
-        final String assertionText = String.format("%1$s is NOT true.", assertion.name());
-        return validate(ifFalse(assertion), assertionText);
+    public boolean isTrue(final String jsonPathExpression) {
+        return is(jsonPathExpression + " == true");
     }
 
-    /**
-     * Validates the given assertion.
-     * @param assertion The assertion
-     * @return True, if assertion is false
-     */
-    public boolean ifFalse(final AlexaAssertion assertion) {
-        final String conditionalText = String.format("%1$s is NOT true.", assertion.name());
-        return result(!assertion.isTrue(envelope), conditionalText);
+    public boolean isFalse(final String jsonPathExpression) {
+        return is(jsonPathExpression + " == false");
     }
 
-    /**
-     * Validates the given assertion.
-     * @param assertion The assertion
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifFalse(final AlexaAssertion assertion, final Consumer<AlexaSession> followUp) {
-        if (ifFalse(assertion)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
+    public boolean exists(final String jsonPathExpression) {
+        return is(jsonPathExpression);
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response. It
-     * throws an IllegalArgumentException in case the asset does not exist.
-     * @param asset asset to check for existence
-     * @return this response
-     */
-    public AlexaResponse assertExists(final AlexaAsset asset){
-        final String assertionText = String.format("%1$s ifExists.", asset.name());
-        return validate(ifExists(asset), assertionText);
+    public boolean notExists(final String jsonPathExpression) {
+        return is("!(" + jsonPathExpression + ")");
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response.
-     * @param asset asset to check for existence
-     * @return True, if the asset ifExists
-     */
-    public boolean ifExists(final AlexaAsset asset) {
-        final String conditionalText = String.format("%1$s ifExists.", asset.name());
-        return result(asset.exists(envelope), conditionalText);
+    public boolean equals(final String jsonPathExpression, final Object o) {
+        final String s = o instanceof String ? "'" + o + "'" : o.toString();
+        return is(jsonPathExpression + " == " + s);
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response.
-     * @param asset asset to check for existence
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifExists(final AlexaAsset asset, final Consumer<AlexaSession> followUp) {
-        if (ifExists(asset)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
+    public boolean contains(final String jsonPathExpression, final String s) {
+        return is(jsonPathExpression + " =~ /.*" + s + ".*/i");
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response. It
-     * throws an IllegalArgumentException in case the asset does exist.
-     * @param asset asset to check for existence
-     * @return this response
-     */
-    public AlexaResponse assertNotExists(final AlexaAsset asset){
-        final String assertionText = String.format("%1$s does NOT exist.", asset.name());
-        return validate(ifNotExists(asset), assertionText);
+    public AlexaResponse ifTrue(final String jsonPathExpression, final Consumer<AlexaSession> followUp) {
+        return ifIs(jsonPathExpression + " == true", followUp);
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response.
-     * @param asset asset to check for existence
-     * @return True, if the asset does not exist
-     */
-    public boolean ifNotExists(final AlexaAsset asset) {
-        final String conditionalText = String.format("%1$s does NOT exist.", asset.name());
-        return result(!asset.exists(envelope), conditionalText);
+    public AlexaResponse ifFalse(final String jsonPathExpression, final Consumer<AlexaSession> followUp) {
+        return ifIs(jsonPathExpression + " == false", followUp);
     }
 
-    /**
-     * Validates the existence of a speechlet asset inside the response.
-     * @param asset asset to check for existence
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifNotExists(final AlexaAsset asset, final Consumer<AlexaSession> followUp) {
-        if (ifNotExists(asset)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
+    public AlexaResponse ifExists(final String jsonPathExpression, final Consumer<AlexaSession> followUp) {
+        return ifIs(jsonPathExpression, followUp);
     }
 
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value. It
-     * throws an IllegalArgumentException in case the asset has not the value given.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @return this response
-     */
-    public AlexaResponse assertEquals(final AlexaAsset asset, final Object value){
-        final String assertionText = String.format("%1$s is equal to '%2$s'.", asset.name(), value);
-        return validate(ifEquals(asset, value), assertionText);
+    public AlexaResponse ifNotExists(final String jsonPathExpression, final Consumer<AlexaSession> followUp) {
+        return ifIs("!(" + jsonPathExpression + ")", followUp);
     }
 
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @return True, if the asset has the value given
-     */
-    public boolean ifEquals(final AlexaAsset asset, final Object value) {
-        final String conditionalText = String.format("%1$s is equal to '%2$s'.", asset.name(), value);
-        return result(asset.equals(envelope, value), conditionalText);
+    public AlexaResponse ifEquals(final String jsonPathExpression, final Object o, final Consumer<AlexaSession> followUp) {
+        final String s = o instanceof String ? "'" + o + "'" : o.toString();
+        return ifIs(jsonPathExpression + " == " + s, followUp);
     }
 
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifEquals(final AlexaAsset asset, final Object value, final Consumer<AlexaSession> followUp) {
-        if (ifEquals(asset, value)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value. It
-     * throws an IllegalArgumentException in case the asset has the value given.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @return this response
-     */
-    public AlexaResponse assertNotEquals(final AlexaAsset asset, final Object value){
-        final String assertionText = String.format("%1$s is NOT equal to '%2$s'.", asset.name(), value);
-        return validate(ifNotEquals(asset, value), assertionText);
-    }
-
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @return True, if the asset has not the value given
-     */
-    public boolean ifNotEquals(final AlexaAsset asset, final Object value) {
-        final String conditionalText = String.format("%1$s is NOT equal to '%2$s'.", asset.name(), value);
-        return result(!asset.equals(envelope, value), conditionalText);
-    }
-
-    /**
-     * Validates the value of a speechlet asset. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset asset whose value needs to be checked
-     * @param value the expected value of the speechlet asset
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifNotEquals(final AlexaAsset asset, final Object value, final Consumer<AlexaSession> followUp) {
-        if (ifNotEquals(asset, value)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if the value of a speechlet asset ifMatch the pattern given. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value. It
-     * throws an IllegalArgumentException in case value of the asset does not match the pattern given.
-     * @param asset the asset whose value needs to be checked
-     * @param pattern regular expression
-     * @return this response
-     */
-    public AlexaResponse assertMatches(final AlexaAsset asset, final String pattern){
-        final String assertionText = String.format("%1$s ifMatch pattern '%2$s'.", asset.name(), pattern);
-        return validate(ifMatch(asset, pattern), assertionText);
-    }
-
-    /**
-     * Validates if the value of a speechlet asset ifMatch the pattern given. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset the asset whose value needs to be checked
-     * @param pattern regular expression
-     * @return True, if the value ifMatch the pattern given.
-     */
-    public boolean ifMatch(final AlexaAsset asset, final String pattern) {
-        final String conditionalText = String.format("%1$s ifMatch pattern '%2$s'.", asset.name(), pattern);
-        return result(asset.matches(envelope, pattern), conditionalText);
-    }
-
-    /**
-     * Validates if the value of a speechlet asset ifMatch the pattern given. In case the asset is not a field but
-     * a field group the entire JSON portion of that asset is treated as the value.
-     * @param asset the asset whose value needs to be checked
-     * @param pattern regular expression
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifMatch(final AlexaAsset asset, final String pattern, final Consumer<AlexaSession> followUp) {
-        if (ifMatch(asset, pattern)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if shouldEndSession is true. It
-     * throws an IllegalArgumentException in case shouldEndSession is false.
-     * @return this response
-     */
-    public AlexaResponse assertSessionEnded(){
-        return assertTrue(AlexaAssertion.SessionEnded);
-    }
-
-    /**
-     * Validates if shouldEndSession is true. It
-     * throws an IllegalArgumentException in case shouldEndSession is false.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionEnded(final Consumer<AlexaSession> followUp) {
-        if (ifSessionEnded()) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if shouldEndSession is true. It
-     * throws an IllegalArgumentException in case shouldEndSession is false.
-     * @return True, if shouldEndSession is true
-     */
-    public boolean ifSessionEnded() {
-        return ifTrue(AlexaAssertion.SessionEnded);
-    }
-
-    /**
-     * Validates if shouldEndSession is false. It
-     * throws an IllegalArgumentException in case shouldEndSession is true.
-     * @return this response
-     */
-    public AlexaResponse assertSessionStillOpen(){
-        return assertTrue(AlexaAssertion.SessionStillOpen);
-    }
-
-    /**
-     * Validates if shouldEndSession is false. It
-     * throws an IllegalArgumentException in case shouldEndSession is true.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStillOpen(final Consumer<AlexaSession> followUp) {
-        if (ifSessionStillOpen()) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if shouldEndSession is false. It
-     * throws an IllegalArgumentException in case shouldEndSession is true.
-     * @return True, if shouldEndSession is false
-     */
-    public boolean ifSessionStillOpen() {
-        return ifTrue(AlexaAssertion.SessionStillOpen);
-    }
-
-
-    /**
-     * Validates if a session attribute ifExists. It throws an IllegalArgumentException
-     * in case the session attribute does not exist.
-     * @param key key of the session attribute
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateExists(final String key){
-        final String assertionText = String.format("Session state with key '%1$s' ifExists.", key);
-        return validate(ifSessionStateExists(key), assertionText);
-    }
-
-    /**
-     * Validates if a session attribute ifExists.
-     * @param key the key of the session attribute.
-     * @return True, if session attribute with given key ifExists.
-     */
-    public boolean ifSessionStateExists(final String key) {
-        final String conditionalText = String.format("Session state with key '%1$s' ifExists.", key);
-        return result(envelope.getSessionAttributes().containsKey(key), conditionalText);
-    }
-
-    /**
-     * Validates if a session attribute ifExists.
-     * @param key the key of the session attribute.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateExists(final String key, final Consumer<AlexaSession> followUp) {
-        if (ifSessionStateExists(key)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if a session attributes value is not null. It throws an IllegalArgumentException
-     * in case the session attribute is null.
-     * @param key key of the session attribute.
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateNotNull(final String key){
-        final String assertionText = String.format("Session state with key '%1$s' is NOT null.", key);
-        return validate(ifSessionStateNotNull(key), assertionText);
-    }
-
-    /**
-     * Validates if a session attributes value is not null.
-     * @param key key of the session attribute.
-     * @return True, if session attributes value with given key is not null
-     */
-    public boolean ifSessionStateNotNull(final String key) {
-        final String conditionalText = String.format("Session state with key '%1$s' is NOT null.", key);
-        return result((getSlotValue(key).orElse(null) != null), conditionalText);
-    }
-
-    /**
-     * Validates if a session attributes value is not null.
-     * @param key key of the session attribute.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateNotNull(final String key, Consumer<AlexaSession> followUp) {
-        if (ifSessionStateNotNull(key)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if a session attributes value is not blank. It throws an IllegalArgumentException
-     * in case the session attribute is blank.
-     * @param key key of the session attribute.
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateNotBlank(final String key){
-        final String assertionText = String.format("Session state with key '%1$s' is NOT blank.", key);
-        return validate(ifSessionStateNotBlank(key), assertionText);
-    }
-
-    /**
-     * Validates if a session attributes value is not blank.
-     * @param key key of the session attribute.
-     * @return True, if session attributes value with given key is not blank
-     */
-    public boolean ifSessionStateNotBlank(final String key) {
-        final String conditionalText = String.format("Session state with key '%1$s' is NOT blank.", key);
-        final boolean conditionalResult = ifSessionStateNotNull(key) && StringUtils.isNotBlank(String.valueOf(getSlotValue(key).orElse("")));
-        return result(conditionalResult, conditionalText);
-    }
-
-    /**
-     * Validates if a session attributes value is not blank.
-     * @param key key of the session attribute.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateNotBlank(final String key, final Consumer<AlexaSession> followUp) {
-        if (ifSessionStateNotBlank(key)) {
-            followUp.accept(this.request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if a session attributes value is equal to the value given. It throws an IllegalArgumentException
-     * in case the session attributes value is not equal to the one given.
-     * @param key key of the session attribute.
-     * @param value expected value of the session attribute.
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateEquals(final String key, final String value){
-        final String assertionText = String.format("Session state with key '%1$s' is equal to '%2$s'.", key, value);
-        return validate(ifSessionStateEquals(key, value), assertionText);
-    }
-
-    /**
-     * Validates if a session attributes value is equal to the value given.
-     * @param key key of the session attribute.
-     * @param value expected value of the session attribute.
-     * @return True, if the session attributes value ifEquals the value given
-     */
-    public boolean ifSessionStateEquals(final String key, final String value) {
-        final String conditionalText = String.format("Session state with key '%1$s' is equal to '%2$s'.", key, value);
-        final boolean conditionalResult = value != null ? ifSessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).equals(value) :
-                (envelope.getSessionAttributes().getOrDefault(key, null) == null);
-        return result(conditionalResult, conditionalText);
-    }
-
-    /**
-     * Validates if a session attributes value is equal to the value given.
-     * @param key key of the session attribute.
-     * @param value expected value of the session attribute.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateEquals(final String key, final String value, final Consumer<AlexaSession> followUp) {
-        if (ifSessionStateEquals(key, value)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if a session attributes value contains the string given. It throws an IllegalArgumentException
-     * in case the session attributes value does not contain the string given.
-     * @param key key of the session attribute.
-     * @param subString expected string portion in session attribute value.
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateContains(final String key, final String subString){
-        final String assertionText = String.format("Session state with key '%1$s' contains '%2$s'.", key, subString);
-        return validate(ifSessionStateContains(key, subString), assertionText);
-    }
-
-    /**
-     * Validates if a session attributes value contains the string given.
-     * @param key key of the session attribute.
-     * @param subString expected string portion in session attribute value.
-     * @return True, if the session attribute value contains the given string.
-     */
-    public boolean ifSessionStateContains(final String key, final String subString) {
-        final String conditionalText = String.format("Session state with key '%1$s' contains '%2$s'.", key, subString);
-        final boolean conditionalResult = ifSessionStateNotNull(key) && StringUtils.contains(String.valueOf(getSlotValue(key).orElse("")), subString);
-        return result(conditionalResult, conditionalText);
-    }
-
-    /**
-     * Validates if a session attributes value contains the string given.
-     * @param key key of the session attribute.
-     * @param subString expected string portion in session attribute value.
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateContains(final String key, final String subString, Consumer<AlexaSession> followUp) {
-        if (ifSessionStateContains(key, subString)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
-    }
-
-    /**
-     * Validates if value of a session attribute ifMatch the pattern given. It throws an IllegalArgumentException
-     * in case the session attributes value does not match with the pattern given.
-     * @param key key of the session attribute.
-     * @param regex regular expression
-     * @return this response
-     */
-    public AlexaResponse assertSessionStateMatches(final String key, final String regex){
-        final String assertionText = String.format("Session state with key '%1$s' ifMatch pattern '%2$s'.", key, regex);
-        return validate(ifSessionStateMatches(key, regex), assertionText);
-    }
-
-    /**
-     * Validates if value of a session attribute ifMatch the pattern given.
-     * @param key key of the session attribute.
-     * @param regex regular expression
-     * @return True, if the value ifMatch the pattern given.
-     */
-    public boolean ifSessionStateMatches(final String key, final String regex) {
-        final String conditionalText = String.format("Session state with key '%1$s' ifMatch pattern '%2$s'.", key, regex);
-        final boolean conditionalResult = ifSessionStateNotNull(key) && String.valueOf(getSlotValue(key).orElse("")).matches(regex);
-        return result(conditionalResult, conditionalText);
-    }
-
-    /**
-     * Validates if value of a session attribute ifMatch the pattern given.
-     * @param key key of the session attribute.
-     * @param regex regular expression
-     * @param followUp code-block executes when condition is true
-     * @return this response
-     */
-    public AlexaResponse ifSessionStateMatches(final String key, final String regex, Consumer<AlexaSession> followUp) {
-        if (ifSessionStateMatches(key, regex)) {
-            followUp.accept(request.getSession());
-        }
-        return this;
+    public AlexaResponse ifContains(final String jsonPathExpression, final String s, final Consumer<AlexaSession> followUp) {
+        return ifIs(jsonPathExpression + " =~ /.*" + s + ".*/i", followUp);
     }
 
     /**
@@ -709,16 +259,5 @@ public class AlexaResponse {
         final String result = conditionalResult ? "TRUE" : "FALSE";
         log.info(String.format("->[%1$s] %2$s", result, conditionalText));
         return conditionalResult;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Optional<Object> getSlotValue(final String key) {
-        if (envelope.getSessionAttributes().containsKey(key)) {
-            final Object val = envelope.getSessionAttributes().get(key);
-            return val == null ? Optional.empty() :
-                    val instanceof LinkedHashMap ? Optional.of(((LinkedHashMap)val).getOrDefault("value", "")) :
-                            Optional.of(val);
-        }
-        return Optional.empty();
     }
 }

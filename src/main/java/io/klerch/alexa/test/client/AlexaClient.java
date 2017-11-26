@@ -20,6 +20,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.log4j.Logger;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -143,9 +145,12 @@ public class AlexaClient {
         return new AlexaClientBuilder(yamlReader);
     }
 
-    public static AlexaClientBuilder create(final String resourceFilePath) throws IOException {
-        final InputStream stream = AlexaClient.class.getClassLoader().getResourceAsStream(resourceFilePath);
-        return create(stream);
+    public static AlexaClientBuilder create(final String filePath) throws IOException {
+        return create(new FileInputStream(filePath));
+    }
+
+    public static AlexaClientBuilder create(final File file) throws IOException {
+        return create(new FileInputStream(file));
     }
 
     public AlexaSession startSession() {
@@ -153,9 +158,9 @@ public class AlexaClient {
     }
 
     /**
-     * Starts the script that was loaded from an XML file provided when AlexaClient was created.
-     * If you created this client without giving it an XML script-file startScript does
-     * nothing as there's no script to read from. In this case use startSession to
+     * Starts the script that was loaded from a YAML file referenced when AlexaClient was created.
+     * If you created this client without giving it an file reference startScript does
+     * nothing as there's no script to read from. In this case use startSession
      */
     public void startScript() {
         Validate.notNull(yLaunch, "Could not find Launch node. Add this node to the top level of your YAML script and use it as an entry point for your conversation path.");

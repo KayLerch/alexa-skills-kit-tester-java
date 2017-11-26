@@ -204,18 +204,23 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
         }
 
         AlexaApiEndpointBuilder(final HashMap<Object, Object> endpointConfiguration) {
-            Validate.notEmpty(endpointConfiguration, "Configuration section in your YAML file must not be empty. At least the skillId must be set.");
+            Validate.notEmpty(endpointConfiguration, "configuration section in your YAML file must not be empty. At least a type needs to be set.");
             this.skillId = Optional.ofNullable(endpointConfiguration.get("skillId"))
                     .filter(o -> o instanceof String)
                     .map(Object::toString)
                     .filter(StringUtils::isNotBlank)
-                    .orElseThrow(() -> new RuntimeException("skillId in your Configuration section must not be blank."));
+                    .orElse(System.getenv("skillId"));
 
             Optional.ofNullable(endpointConfiguration.get("lwa")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).ifPresent(yLwa -> {
                 this.lwaClientId = Optional.ofNullable(yLwa.get("clientId")).map(Object::toString).orElse(null);
                 this.lwaClientSecret = Optional.ofNullable(yLwa.get("clientSecret")).map(Object::toString).orElse(null);
                 this.lwaRefreshToken = Optional.ofNullable(yLwa.get("refreshToken")).map(Object::toString).orElse(null);
             });
+        }
+
+        public AlexaApiEndpointBuilder withSkillId(final String skillId) {
+            this.skillId = skillId;
+            return this;
         }
 
         public AlexaApiEndpointBuilder withLwaClientId(final String lwaClientId) {

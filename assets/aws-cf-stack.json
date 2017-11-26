@@ -21,6 +21,12 @@
       "Type": "String",
       "MinLength": "1",
       "ConstraintDescription": "must contain a valid refresh token."
+    },
+    "skillId": {
+      "Description": "SkillId",
+      "Type": "String",
+      "MinLength": "1",
+      "ConstraintDescription": "must contain a valid refresh token."
     }
   },
   "Resources": {
@@ -40,6 +46,7 @@
           "Variables" : {
             "s3Bucket" : { "Ref" : "TestScriptBucket" },
             "s3Path" : "",
+            "skillId" : { "Ref" : "skillId" },
             "lwaClientId" : { "Ref" : "lwaClientId" },
             "lwaClientSecret" : { "Ref" : "lwaClientSecret" },
             "lwaRefreshToken" : { "Ref" : "lwaRefreshToken" }
@@ -77,9 +84,17 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "s3:*"
+                    "s3:ListBucket",
+                    "s3:ListObjects"
                   ],
-                  "Resource": "*"
+                  "Resource": { "Fn::GetAtt": [ "TestScriptBucket", "Arn" ] }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:GetObject"
+                  ],
+                  "Resource": { "Fn::Join" : [ "/", [ { "Fn::GetAtt": [ "TestScriptBucket", "Arn" ] }, "*" ] ] }
                 },
                 {
                   "Effect": "Allow",

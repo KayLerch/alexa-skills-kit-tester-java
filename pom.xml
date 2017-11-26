@@ -217,19 +217,9 @@
             <version>${aws.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jooq</groupId>
-            <artifactId>joox</artifactId>
-            <version>1.5.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.esotericsoftware.yamlbeans</groupId>
             <artifactId>yamlbeans</artifactId>
             <version>1.12</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.9.0</version>
         </dependency>
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>

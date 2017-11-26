@@ -23,9 +23,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Lambda implements RequestStreamHandler {
-    public final static String S3_BUCKET_PROPERTY = "s3Bucket";
-    public final static String S3_KEY_PROPERTY = "s3Key";
-    public final static String S3_REGION_PROPERTY = "s3Region";
+    private final static String S3_BUCKET_PROPERTY = "s3Bucket";
+    private final static String S3_KEY_PROPERTY = "s3Key";
+    private final static String S3_REGION_PROPERTY = "s3Region";
 
     private final static Logger log = Logger.getLogger(Lambda.class);
     private final ObjectMapper om = new ObjectMapper();

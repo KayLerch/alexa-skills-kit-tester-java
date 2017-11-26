@@ -6,8 +6,6 @@ import com.amazon.speech.speechlet.Context;
 import com.amazon.speech.speechlet.Session;
 import com.amazon.speech.speechlet.SessionEndedRequest;
 import com.amazon.speech.speechlet.interfaces.system.SystemState;
-import io.klerch.alexa.test.asset.AlexaAssertion;
-import io.klerch.alexa.test.asset.AlexaAsset;
 import io.klerch.alexa.test.client.endpoint.AlexaSimulationApiEndpoint;
 import io.klerch.alexa.test.request.*;
 import io.klerch.alexa.test.response.AlexaResponse;
@@ -15,17 +13,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
-import org.joox.Match;
 import org.w3c.dom.Element;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
-import static org.joox.JOOX.$;
-import static org.joox.JOOX.ids;
-import static org.joox.JOOX.tag;
 
 /**
  * The session actor manages a conversation within a single Alexa session by
@@ -348,6 +341,11 @@ public class AlexaSession extends AlexaActor {
             ((Optional<?>)yLaunch).ifPresent(launch -> {
                 executeAction((ArrayList)launch);
             });
+        } else if (yLaunch instanceof ArrayList) {
+            executeAction((ArrayList)yLaunch);
+        }
+        else {
+            log.warn("Launch node is of unexpected type.");
         }
     }
 
@@ -416,153 +414,5 @@ public class AlexaSession extends AlexaActor {
 
         // follow up with standalone anchors
         followUps.forEach(this::executeAction);
-    }
-
-    Match sessionMatch = null;
-    final Map<String, Integer> goToIterations = new HashMap<>();
-
-     void executeSession(final Element session) {
-        // reset iteration count for gotos
-        goToIterations.clear();
-        // keep in mind root node of session to jump back and forth using gotos
-        this.sessionMatch = $(session);
-        // step by step processing
-        $(session).children().forEach(processAction);
-    }
-
-    final void goTo(final Element goTo) {
-        final String id = Optional.ofNullable(goTo.getAttribute("id")).orElseThrow(() -> new RuntimeException("The id-attribute is missing in the goto-tag."));
-        final int threshold = Optional.ofNullable(goTo.getAttribute("breakoutAfter")).filter(NumberUtils::isNumber).map(Integer::parseInt).orElse(100);
-        final String breakout = goTo.getAttribute("breakoutWith");
-
-        final Integer goToIteration = Optional.ofNullable(goToIterations.putIfAbsent(id, 0)).orElse(0) + 1;
-
-        if (goToIteration > threshold) {
-            if ("exception".equalsIgnoreCase(breakout)) {
-                throw new RuntimeException("[ERROR] Maximum loop count of " + threshold + " reached for goto with id '" + id + "'.");
-            }
-            log.info("[INFO] Break out of goto loop with id " + id + " as maximum turn count of " + threshold + " exceeded.");
-        } else {
-            log.info("[INFO] Goto action with id '" + id + "' (turn: " + goToIteration + ")");
-            goToIterations.put(id, goToIteration);
-            Optional.ofNullable(this.sessionMatch.find(ids(id)).not(tag("goto")))
-                    .filter(Match::isNotEmpty)
-                    .orElseThrow(() -> new RuntimeException("[ERROR] Goto references an action with id '" + id + "' that does not exist as a node in your session with the same id."))
-                    .forEach(processAction);
-        }
-    }
-
-    final Consumer<Element> processAction = request -> {
-        final String requestName = request.getLocalName();
-        // in case request is a delay, must provide a value as attribute
-        Validate.isTrue(request.hasAttribute("value") || !"delay".equals(requestName), "[ERROR] Delay must have a value provided as an attribute of delay-tag in your script-file. The value should be numeric and indicates the milliseconds to wait for the next request.");
-        // in case request is a custom intent, must provide a name as attribute
-        Validate.isTrue(request.hasAttribute("name") || !"intent".equals(requestName), "[ERROR] Intent must have a name provided as an attribute of intent-tag in your script-file.");
-        // request must match method in actor
-        Validate.isTrue("goto".equals(requestName) || Arrays.stream(AlexaSession.class.getMethods()).anyMatch(method -> method.getName().equals(requestName)), "[ERROR] Unknown request-type '%s' found in your script-file.", requestName);
-
-        AlexaResponse response = null;
-
-        switch (requestName) {
-            case "delay" : {
-                delay(Long.parseLong(request.getAttribute("value"))); break;
-            }
-            case "intent" : {
-                response = intent(request.getAttribute("name"), extractSlots($(request))); break;
-            }
-            case "say" : {
-                response = say(request.getAttribute("utterance")); break;
-            }
-            case "goto" : {
-                goTo(request); break;
-            }
-            default: {
-                try {
-                    response = (AlexaResponse)AlexaSession.class.getMethod(requestName).invoke(this);
-                } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                    final String msg = String.format("[ERROR] The request '%1$s' in your script-file is not supported. %2$s", request.getTagName(), e.getMessage());
-                    log.error(msg, e);
-                    throw new RuntimeException(msg, e);
-                }
-            }
-        }
-
-        if (response != null) {
-            // validate response
-            validateResponse(response, $(request));
-        }
-    };
-
-
-    private void validateResponse(final AlexaResponse response, final Match mResponse) {
-        if (mResponse.isEmpty()) {
-            log.info("[INFO] No assertions defined in your script-file to validate skill's response.");
-            return;
-        }
-
-        mResponse.children().forEach(assertion -> {
-            final String tagName = assertion.getTagName();
-            final String assetName = assertion.getAttribute("asset");
-            final String condition = assertion.getAttribute("condition");
-            final String assertionName = assertion.getAttribute("assertion");
-            final String key = assertion.getAttribute("key");
-            final String value = assertion.getAttribute("value");
-            final String method = "if".equals(tagName) ? "if" + StringUtils.capitalize(condition) : tagName;
-
-            // skip request node which is at the same level as all the assertion-tags
-            if ("request".equals(method)) return;
-
-            //Validate.matchesPattern(assertionMethod, "assert.*", "[ERROR] Invalid assertion method '%s' in your script-file.", assertionMethod);
-            Validate.isTrue(Arrays.stream(response.getClass().getMethods()).anyMatch(m -> m.getName().equals(method)), "[ERROR] Invalid assertion method '%s' in your script-file.", method);
-
-            Arrays.stream(response.getClass().getMethods())
-                    .filter(m -> m.getName().equals(method))
-                    .filter(m -> Arrays.stream(m.getParameterTypes()).noneMatch(pt -> pt.isAssignableFrom(Consumer.class)))
-                    .findFirst()
-                    .ifPresent(m -> {
-                        final List<Object> parameters = new ArrayList<>();
-                        if (StringUtils.containsIgnoreCase(m.getName(), "SessionState")) {
-                            if (m.getParameterCount() > 0) {
-                                parameters.add(key);
-                            }
-                            if (m.getParameterCount() > 1) {
-                                parameters.add(value);
-                            }
-                        } else {
-                            Arrays.stream(m.getParameterTypes()).forEach(pc -> {
-                                // assign value to parameter based on its type
-                                parameters.add(AlexaAsset.class.equals(pc) ?
-                                        Enum.valueOf(AlexaAsset.class, assetName) :
-                                        AlexaAssertion.class.equals(pc) ?
-                                                Enum.valueOf(AlexaAssertion.class, assertionName) :
-                                                long.class.equals(pc) ?
-                                                        Long.parseLong(value) :
-                                                        pc.cast(value));
-                            });
-                        }
-                        try {
-                            final Object result = m.invoke(response, parameters.toArray());
-                            // result only for conditional methods and those are always booleans
-                            if (result != null && Boolean.parseBoolean(result.toString())) {
-                                // in that case a conditional was true. The body should contain actions to perform (recursion starts)
-                                $(assertion).children().forEach(processAction);
-                            }
-                        } catch (final InvocationTargetException | IllegalAccessException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-        });
-    }
-
-    private List<Slot> extractSlots(final Match mRequest) {
-        final List<Slot> slots = new ArrayList<>();
-        mRequest.find("request").find("slots").find("slot").forEach(mSlot -> {
-            if (mSlot.hasAttribute("key") && mSlot.hasAttribute("value")) {
-                slots.add(Slot.builder()
-                        .withName(mSlot.getAttribute("key"))
-                        .withValue(mSlot.getAttribute("value")).build());
-            }
-        });
-        return slots;
     }
 }
