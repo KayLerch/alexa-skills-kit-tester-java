@@ -49,8 +49,6 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
     private String lwaAccessToken;
 
     @JsonIgnore
-    static final String SKILL_REF_SEPARATOR = "://";
-    @JsonIgnore
     String id = "";
     @JsonIgnore
     final static ObjectMapper om = new ObjectMapper();
@@ -63,13 +61,13 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
         this.skillId = builder.skillId;
 
         this.lwaClientId = Optional.ofNullable(builder.lwaClientId).filter(StringUtils::isNotBlank).orElse(System.getenv(LWA_CLIENT_ID_PROPERTY));
-        Validate.notBlank(this.lwaClientId, "Missing the " + LWA_CLIENT_ID_PROPERTY + " as an environment variable.");
+        Validate.notBlank(this.lwaClientId, "[ERROR] Missing the " + LWA_CLIENT_ID_PROPERTY + " as an environment variable.");
 
         this.lwaClientSecret = Optional.ofNullable(builder.lwaClientSecret).filter(StringUtils::isNotBlank).orElse(System.getenv(LWA_CLIENT_SECRET_PROPERTY));
-        Validate.notBlank(this.lwaClientSecret, "Missing the " + LWA_CLIENT_SECRET_PROPERTY + " as an environment variable.");
+        Validate.notBlank(this.lwaClientSecret, "[ERROR] Missing the " + LWA_CLIENT_SECRET_PROPERTY + " as an environment variable.");
 
         this.lwaRefreshToken = Optional.ofNullable(builder.lwaRefreshToken).filter(StringUtils::isNotBlank).orElse(System.getenv(LWA_REFRESH_TOKEN_PROPERTY));
-        Validate.notBlank(this.lwaRefreshToken, "Missing the " + LWA_REFRESH_TOKEN_PROPERTY + " as an environment variable.");
+        Validate.notBlank(this.lwaRefreshToken, "[ERROR] Missing the " + LWA_REFRESH_TOKEN_PROPERTY + " as an environment variable.");
 
         this.lwaAccessToken = System.getProperty(LWA_ACCESS_TOKEN_PROPERTY);
     }
@@ -108,7 +106,7 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
                 log.debug(responsePayload);
                 root = om.readTree(responsePayload);
             } catch (final IOException e) {
-                throw new RuntimeException("Invalid response from SMAPI. " + e.getMessage());
+                throw new RuntimeException("[ERROR] Invalid response from SMAPI. " + e.getMessage());
             }
 
             statusCode = root.get("status").textValue();
@@ -118,21 +116,21 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
             if (IN_PROGRESS.equals(statusCode)) {
                 // grab id for next request to poll for completion
                 id = root.get("id").textValue();
-                log.info("Asynchronous processing in progress. Keep on polling for result of transaction with id " + id);
+                log.info("[INFO] Asynchronous processing in progress. Keep on polling for result of transaction with id " + id);
             }
         }
 
         final String endpoint = root.get("result").get("skillExecutionInfo").get("invocationRequest").get("endpoint").textValue();
-        log.info("Endpoint: " + endpoint);
+        log.info("[INFO] Endpoint is " + endpoint);
 
         final JsonNode responseBody = root.get("result").get("skillExecutionInfo").get("invocationResponse").get("body");
 
-        Validate.notNull(responseBody, "Skill returned an invalid response");
+        Validate.notNull(responseBody, "[ERROR] Skill returned an invalid response");
 
         try {
             return Optional.of(new AlexaResponse(request, payload, om.writeValueAsString(responseBody)));
         } catch (IOException e) {
-            throw new RuntimeException("Could not parse skill response received from SMAPI. " + e.getMessage());
+            throw new RuntimeException("[ERROR] Could not parse skill response received from SMAPI. " + e.getMessage());
         }
     }
 
@@ -140,7 +138,7 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
         try {
             return HttpClientBuilder.create().build().execute(getRequest(payload));
         } catch (final IOException e) {
-            throw new RuntimeException("Error received from SMAPI. " + e.getMessage());
+            throw new RuntimeException("[ERROR] Error received from SMAPI. " + e.getMessage());
         }
     }
 
@@ -184,7 +182,7 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
             final String responsePayload = IOUtils.toString(responseEntity.getContent(), "UTF-8");
             cacheAccessToken(om.readTree(responsePayload));
         } catch (final IOException e) {
-            throw new RuntimeException("Error received from Login with Amazon on refreshing an access token. " + e.getMessage(), e);
+            throw new RuntimeException("[ERROR] Error received from Login with Amazon on refreshing an access token. " + e.getMessage(), e);
         }
     }
 
@@ -239,7 +237,7 @@ public abstract class AlexaApiEndpoint implements AlexaEndpoint {
         }
 
         void preBuild() {
-            Validate.notBlank(skillId, "SkillId must not be empty.");
+            Validate.notBlank(skillId, "[ERROR] SkillId must not be empty.");
         }
 
         public abstract T build();

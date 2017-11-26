@@ -120,7 +120,7 @@ public class AlexaClient {
 
     Optional<AlexaResponse> fire(final AlexaRequest request, final String payload) {
         // ensure payload set
-        Validate.notBlank(payload, "Invalid speechlet request contents. Must not be null or empty.");
+        Validate.notBlank(payload, "[ERROR] Invalid speechlet request contents. Must not be null or empty.");
         // delegate execution to child implementation
         final long startTimestamp = System.currentTimeMillis();
         final Optional<AlexaResponse> response = endpoint.fire(request, payload);
@@ -163,7 +163,7 @@ public class AlexaClient {
      * nothing as there's no script to read from. In this case use startSession
      */
     public void startScript() {
-        Validate.notNull(yLaunch, "Could not find Launch node. Add this node to the top level of your YAML script and use it as an entry point for your conversation path.");
+        Validate.notNull(yLaunch, "[ERROR] Could not find Launch node. Add this node to the top level of your YAML script and use it as an entry point for your conversation path.");
         startSession().executeSession(yLaunch);
     }
 
@@ -194,7 +194,7 @@ public class AlexaClient {
             try {
                 yRoot = (HashMap)root.read();
             } catch (YamlException e) {
-                log.error("Could not read YAML script file", e);
+                log.error("[ERROR] Could not read YAML script file", e);
             }
 
             final HashMap yConfig = Optional.ofNullable(yRoot.get("configuration")).filter(o -> o instanceof HashMap).map(o -> (HashMap)o).orElseThrow(() -> new RuntimeException("configuration node is missing or empty."));

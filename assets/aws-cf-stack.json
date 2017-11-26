@@ -23,7 +23,7 @@
       "ConstraintDescription": "must contain a valid refresh token."
     },
     "skillId": {
-      "Description": "SkillId",
+      "Description": "SkillId - leave empty if you'd like to reference it individually in the YAML scripts.",
       "Type": "String",
       "MinLength": "1",
       "ConstraintDescription": "must contain a valid refresh token."
