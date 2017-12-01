@@ -40,7 +40,7 @@
       "Properties": {
         "Code": {
           "S3Bucket": "io.klerch.alexa.test",
-          "S3Key": "alexa-skills-kit-tester-java-0.2.0.jar"
+          "S3Key": "alexa-skills-kit-tester-java-1.0.0.jar"
         },
         "Environment" : {
           "Variables" : {
