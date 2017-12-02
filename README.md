@@ -20,7 +20,7 @@ __Java SDK__ is the core component which is encapsulating the access to the Test
 needs to be written in Java nor do you need to write a single line of Java to leverage the Test SDK. But if you have a
 skill implemented in Java you could use the core Java SDK to write unit tests. It got a nice and fluent interface.
 
-__Test CLI__ sits on top of the Java SDK. As it comes as a JAR package it will be invoked from the commandline. The CLI
+__Test CLI__ sits on top of the Java SDK. As it comes as a [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar) it will be invoked from the commandline. The CLI
 takes YAML files from local storage that specify the conversation you'd like to run against your skill endpoint.
 
 __Lambda Handler__ also sits on top of the Java SDK. It implements a _LambdaRequestHandler_. The JAR package can be uploaded
@@ -164,7 +164,8 @@ $ export lwaClientId=...
 $ export lwaClientSecret=...
 $ export lwaRefreshToken=...
 ```
-Now you can use the JAR package you get when you built the project and reference the YAML script via file path.
+Now you can use the [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar
+) you get when you built the project and reference the YAML script via file path. You can also [download](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar) the latest built.
 
 ```bash
 $ java -jar alexa-skills-kit-tester-java-1.0.0.jar -f ./path/to/your/script.yml
