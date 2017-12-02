@@ -10,6 +10,9 @@ Amazon's _Skill Management API (SMAPI)_ to fire requests at your skill endpoint 
 with help of assertions specified in YAML. It is built on a core Java SDK you could also use for programmatic
 access e.g. for writing unit tests for skills implemented in Java.
 
+Learn how to use this framework in the [lab guides](https://alexa.design/test-automation) which backed the 
+_Test Automation for Alexa skills_ workshop at re:Invent 2017 conference in Las Vegas.
+
 ### Components
 
 ![](docs/logical_layers.png)

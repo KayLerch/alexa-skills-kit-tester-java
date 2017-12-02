@@ -29,7 +29,6 @@ import java.util.*;
 import static io.klerch.alexa.test.client.AlexaClient.API_ENDPOINT.EU;
 import static io.klerch.alexa.test.client.AlexaClient.API_ENDPOINT.NA;
 
-
 public class AlexaClient {
     private final static Logger log = Logger.getLogger(AlexaClient.class);
     private final static ObjectMapper mapper = new ObjectMapper();
@@ -37,13 +36,13 @@ public class AlexaClient {
     final AlexaEndpoint endpoint;
     private AlexaResponse lastResponse;
     final String apiEndpoint;
-    final long millisFromCurrentDate;
-    long lastExecutionTimeMillis;
-    final Locale locale;
+    private final long millisFromCurrentDate;
+    private long lastExecutionTimeMillis;
+    private final Locale locale;
     final Device device;
-    final Application application;
-    final User user;
-    final Optional<String> debugFlagSessionAttributeName;
+    private final Application application;
+    private final User user;
+    private final Optional<String> debugFlagSessionAttributeName;
     private final Object yLaunch;
 
     private static Map<API_ENDPOINT, String> apiEndpoints = new HashMap<>();
