@@ -1,6 +1,7 @@
 package io.klerch.alexa.test.response;
 
 import com.amazon.speech.json.SpeechletResponseEnvelope;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -28,6 +29,9 @@ public class AlexaResponse {
             .options(Option.SUPPRESS_EXCEPTIONS)
             .build();
 
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     private final static Logger log = Logger.getLogger(AlexaResponse.class);
     final SpeechletResponseEnvelope envelope;
     final String responsePayload;
@@ -38,7 +42,6 @@ public class AlexaResponse {
         this.request = request;
         this.requestPayload = requestPayload;
         this.responsePayload = responsePayload;
-        final ObjectMapper mapper = new ObjectMapper();
         try {
             envelope = mapper.readValue(responsePayload, SpeechletResponseEnvelope.class);
         } catch (final IOException e) {
