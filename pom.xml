@@ -6,7 +6,7 @@
 
     <groupId>io.klerch</groupId>
     <artifactId>alexa-skills-kit-tester-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Alexa Skills Kit Tester for Java</name>
@@ -60,7 +60,7 @@
         <aws.log4j.version>1.0.0</aws.log4j.version>
         <junit.version>4.12</junit.version>
         <mockito.version>1.10.19</mockito.version>
-        <alexa-skillskit-version>1.6.0</alexa-skillskit-version>
+        <alexa-skillskit-version>1.8.1</alexa-skillskit-version>
         <sonar-jacoco-listeners.version>3.8</sonar-jacoco-listeners.version>
         <sonar.junit.reportsPath>${project.basedir}/target/surefire-reports</sonar.junit.reportsPath>
         <sonar.jacoco.itReportPath>${project.basedir}/target/jacoco-it.exec</sonar.jacoco.itReportPath>
