@@ -1,6 +1,7 @@
 [![Join the chat at https://gitter.im/alexa-skills-kit-tester-java/Lobby](https://badges.gitter.im/alexa-skills-kit-tester-java/Lobby.svg)](https://gitter.im/alexa-skills-kit-tester-java/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Maven central](https://img.shields.io/badge/maven%20central-v1.0.0-orange.svg)](http://search.maven.org/#artifactdetails%7Cio.klerch%7Calexa-skills-kit-tester-java%7C1.0.0%7Cjar)
+[![Maven central](https://img.shields.io/badge/maven%20central-v1.1.0-orange.svg)](http://search.maven.org/#artifactdetails%7Cio.klerch%7Calexa-skills-kit-tester-java%7C1.1.0%7Cjar)
 
+Contributors: [jadimmock](https://github.com/jadimmock)
 
 # Alexa Skills Kit Testing Framework
 
@@ -23,7 +24,7 @@ __Java SDK__ is the core component which is encapsulating the access to the Test
 needs to be written in Java nor do you need to write a single line of Java to leverage the Test SDK. But if you have a
 skill implemented in Java you could use the core Java SDK to write unit tests. It got a nice and fluent interface.
 
-__Test CLI__ sits on top of the Java SDK. As it comes as a [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar) it will be invoked from the commandline. The CLI
+__Test CLI__ sits on top of the Java SDK. As it comes as a [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.1.0.jar) it will be invoked from the commandline. The CLI
 takes YAML files from local storage that specify the conversation you'd like to run against your skill endpoint.
 
 __Lambda Handler__ also sits on top of the Java SDK. It implements a _LambdaRequestHandler_. The JAR package can be uploaded
@@ -167,11 +168,11 @@ $ export lwaClientId=...
 $ export lwaClientSecret=...
 $ export lwaRefreshToken=...
 ```
-Now you can use the [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar
+Now you can use the [JAR package](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.1.0.jar
 ) you get when you built the project and reference the YAML script via file path. You can also [download](https://s3.amazonaws.com/io.klerch.alexa.test/alexa-skills-kit-tester-java-1.0.0.jar) the latest built.
 
 ```bash
-$ java -jar alexa-skills-kit-tester-java-1.0.0.jar -f ./path/to/your/script.yml
+$ java -jar alexa-skills-kit-tester-java-1.1.0.jar -f ./path/to/your/script.yml
 ```
 
 ### Lambda Handler
@@ -205,7 +206,7 @@ like to customize the test execution flow a bit more and you don't want to rely 
   <dependency>
     <groupId>io.klerch</groupId>
     <artifactId>alexa-skills-kit-tester-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <scope>test</scope>
   </dependency>
   ...
